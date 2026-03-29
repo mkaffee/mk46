@@ -115,6 +115,9 @@ function calc() {
   out += `4投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
 
   document.getElementById("result").innerText = out;
+
+    /* ← 自動スクロール復活 */
+  document.getElementById("result").scrollIntoView({ behavior: "smooth" });
 }
 </script>
 
