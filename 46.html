@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>mk46 v2</title>
+<title>mk46 v2.1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -36,19 +36,27 @@ button {
   border-radius: 6px;
 }
 
+/* 結果表示欄の枠＋スクロール */
 #result {
   margin-top: 24px;
   font-family: monospace;
-  white-space: pre;   /* ← pre-wrap ではなく pre に戻す */
+  white-space: pre;
   font-size: 18px;
   line-height: 1.6;
+
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+
+  max-height: 300px;     /* スクロール可能に */
+  overflow-y: auto;
 }
 </style>
 </head>
 
 <body>
 
-<h2>mk46 v2（4:6メソッド）</h2>
+<h2>mk46 v2.1（4:6メソッド）</h2>
 
 <label>出来上がり量（g）：</label>
 <input type="number" id="final" value="500">
@@ -90,8 +98,7 @@ function calc() {
   let cum = 0;
   let out = "";
 
-  out += "【4:6メソッド】\n\n";
-  out += `豆量：${beans} g\n\n`;
+  out += "【4:6メソッド】  豆量：" + beans + " g\n\n";
 
   out += "── 前半40%（フレーバー） ──\n";
   cum += first;
@@ -107,7 +114,7 @@ function calc() {
   cum += backEach;
   out += `4投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
 
-  document.getElementById("result").innerText = out;  /* ← innerText に変更 */
+  document.getElementById("result").innerText = out;
 }
 </script>
 
