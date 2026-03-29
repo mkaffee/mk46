@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>mk46 v2.1</title>
+<title>mk46 v2.3</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -30,10 +30,17 @@ button {
   padding: 14px;
   font-size: 20px;
   margin-top: 16px;
-  background: #333;
+
+  background: #6F4E37;   /* コーヒー色 */
   color: white;
   border: none;
   border-radius: 6px;
+
+  transition: background 0.2s;
+}
+
+button:active {
+  background: #8B5E3C;   /* 押したとき少し明るく */
 }
 
 /* 結果表示欄の枠＋スクロール */
@@ -48,7 +55,7 @@ button {
   border-radius: 8px;
   padding: 12px;
 
-  max-height: 300px;     /* スクロール可能に */
+  max-height: 300px;
   overflow-y: auto;
 }
 </style>
@@ -56,10 +63,10 @@ button {
 
 <body>
 
-<h2>mk46 v2.1（4:6メソッド）</h2>
+<h2>mk46 v2.3（4:6メソッド）</h2>
 
 <label>出来上がり量（g）：</label>
-<input type="number" id="final" value="500">
+<input type="number" id="final" value="500" oninput="autoBeans()">
 
 <label>豆量（g）：</label>
 <input type="number" id="beans" value="33.3">
@@ -81,6 +88,15 @@ function pad(n) {
   if (n < 10) return "  " + n;
   if (n < 100) return " " + n;
   return n;
+}
+
+/* 出来上がり量から豆量を自動計算 */
+function autoBeans() {
+  const final = Number(document.getElementById("final").value);
+  if (final > 0) {
+    const beans = (final / 15).toFixed(1);
+    document.getElementById("beans").value = beans;
+  }
 }
 
 function calc() {
@@ -116,7 +132,7 @@ function calc() {
 
   document.getElementById("result").innerText = out;
 
-    /* ← 自動スクロール復活 */
+  /* 自動スクロール */
   document.getElementById("result").scrollIntoView({ behavior: "smooth" });
 }
 </script>
