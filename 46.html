@@ -3,36 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <title>mk46 v2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body {
   font-family: sans-serif;
-  padding: 20px;
+  padding: 16px;
+  max-width: 480px;      /* スマホ最適化 */
+  margin: 0 auto;
 }
-label, select, input {
+
+label {
   font-size: 18px;
 }
+
+input, select {
+  font-size: 20px;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  font-size: 20px;
+  margin-top: 16px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+
 #result {
-  margin-top: 20px;
-  font-family: monospace; /* 等幅フォント */
-  white-space: pre;       /* スペースをそのまま表示 */
+  margin-top: 24px;
+  font-family: monospace;   /* 等幅フォント */
+  white-space: pre-wrap;    /* スマホで折り返し */
   font-size: 18px;
   line-height: 1.6;
 }
-.section-title {
-  margin-top: 12px;
-  font-weight: bold;
-}
 </style>
 </head>
+
 <body>
 
 <h2>mk46 v2（4:6メソッド）</h2>
 
 <label>出来上がり量（g）：</label>
-<input type="number" id="final" value="500"><br><br>
+<input type="number" id="final" value="500">
 
 <label>豆量（g）：</label>
-<input type="number" id="beans" value="33.3"><br><br>
+<input type="number" id="beans" value="33.3">
 
 <label>蒸らし倍率：</label>
 <select id="ratio">
@@ -42,17 +64,15 @@ label, select, input {
   <option value="3.0">3.0倍（しっかり）</option>
 </select>
 
-<br><br>
 <button onclick="calc()">計算する</button>
 
 <div id="result"></div>
 
 <script>
 function pad(n) {
-  // 桁揃え（最大3桁想定）
-  if (n < 10) return "  " + n;   // 1桁 → 前に2スペース
-  if (n < 100) return " " + n;   // 2桁 → 前に1スペース
-  return n;                      // 3桁 → そのまま
+  if (n < 10) return "  " + n;
+  if (n < 100) return " " + n;
+  return n;
 }
 
 function calc() {
@@ -60,36 +80,9 @@ function calc() {
   const beans = Number(document.getElementById("beans").value);
   const ratio = Number(document.getElementById("ratio").value);
 
-  const first = Math.round(beans * ratio);   // 1投目
-  const frontTotal = Math.round(final * 0.4); // 前半40%
-  const second = frontTotal - first;          // 2投目
+  const first = Math.round(beans * ratio);
+  const frontTotal = Math.round(final * 0.4);
+  const second = frontTotal - first;
 
-  const backTotal = final - frontTotal;       // 後半60%
-  const backEach = Math.round(backTotal / 2); // 3投目・4投目
-
-  let cum = 0;
-  let out = "";
-
-  out += "【4:6メソッド】\n\n";
-  out += `豆量：${beans} g\n\n`;
-
-  out += "── 前半40%（フレーバー） ──\n";
-  cum += first;
-  out += `1投目： ${pad(first)} g   （累計 ${pad(cum)} g）\n`;
-
-  cum += second;
-  out += `2投目： ${pad(second)} g   （累計 ${pad(cum)} g）\n\n`;
-
-  out += "── 後半60%（濃度調整） ──\n";
-  cum += backEach;
-  out += `3投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
-
-  cum += backEach;
-  out += `4投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
-
-  document.getElementById("result").textContent = out;
-}
-</script>
-
-</body>
-</html>
+  const backTotal = final - frontTotal;
+  const backEach = Math.round
