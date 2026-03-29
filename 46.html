@@ -9,7 +9,7 @@
 body {
   font-family: sans-serif;
   padding: 16px;
-  max-width: 480px;      /* スマホ最適化 */
+  max-width: 480px;
   margin: 0 auto;
 }
 
@@ -38,8 +38,8 @@ button {
 
 #result {
   margin-top: 24px;
-  font-family: monospace;   /* 等幅フォント */
-  white-space: pre-wrap;    /* スマホで折り返し */
+  font-family: monospace;
+  white-space: pre;   /* ← pre-wrap ではなく pre に戻す */
   font-size: 18px;
   line-height: 1.6;
 }
@@ -85,4 +85,31 @@ function calc() {
   const second = frontTotal - first;
 
   const backTotal = final - frontTotal;
-  const backEach = Math.round
+  const backEach = Math.round(backTotal / 2);
+
+  let cum = 0;
+  let out = "";
+
+  out += "【4:6メソッド】\n\n";
+  out += `豆量：${beans} g\n\n`;
+
+  out += "── 前半40%（フレーバー） ──\n";
+  cum += first;
+  out += `1投目： ${pad(first)} g   （累計 ${pad(cum)} g）\n`;
+
+  cum += second;
+  out += `2投目： ${pad(second)} g   （累計 ${pad(cum)} g）\n\n`;
+
+  out += "── 後半60%（濃度調整） ──\n";
+  cum += backEach;
+  out += `3投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
+
+  cum += backEach;
+  out += `4投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
+
+  document.getElementById("result").innerText = out;  /* ← innerText に変更 */
+}
+</script>
+
+</body>
+</html>
