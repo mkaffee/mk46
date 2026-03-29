@@ -101,4 +101,35 @@ function calc() {
   const total = parseFloat(document.getElementById("total").value);
   const beansInput = document.getElementById("beans").value;
   const ratio = parseFloat(document.getElementById("ratio").value);
-  const strength = document
+  const strength = document.getElementById("strength").value;
+
+  const beans = beansInput ? parseFloat(beansInput) : (total / 15);
+
+  const front = total * 0.4;
+  const back = total * 0.6;
+
+  const first = beans * ratio;
+  const second = front - first;
+
+  let splits = 2;
+  if (strength === "light") splits = 1;
+  if (strength === "strong") splits = 3;
+
+  const backPer = back / splits;
+
+  document.getElementById("result").innerHTML =
+    "<b>豆量：</b>" + beans.toFixed(1) + " g<br>" +
+    "<b>前半40％：</b>" + front.toFixed(0) + " ml<br>" +
+    "・1投目（豆×" + ratio + "）： " + first.toFixed(0) + " ml<br>" +
+    "・2投目： " + second.toFixed(0) + " ml<br><br>" +
+    "<b>後半60％：</b>" + back.toFixed(0) + " ml<br>" +
+    "・回数：" + splits + " 回<br>" +
+    "・1回あたり：" + backPer.toFixed(0) + " ml";
+
+  // ▼▼ 自動スクロール ▼▼
+  document.getElementById("result").scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>
