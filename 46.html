@@ -2,132 +2,92 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>4:6メソッド計算機</title>
-
-<!-- ☕ ファビコン（安全なエスケープ済み SVG） -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='75' font-size='75'%3E☕%3C/text%3E%3C/svg%3E">
-
+<title>mk46 v2</title>
 <style>
 body {
   font-family: sans-serif;
   padding: 20px;
-  background: #fafafa;
-  display: flex;
-  justify-content: center;
 }
-
-.container {
-  width: 100%;
-  max-width: 480px;
+label, select, input {
+  font-size: 18px;
 }
-
-h2 {
-  font-size: 1.6em;
-  margin-bottom: 10px;
+#result {
+  margin-top: 20px;
+  font-family: monospace; /* 等幅フォント */
+  white-space: pre;       /* スペースをそのまま表示 */
+  font-size: 18px;
+  line-height: 1.6;
 }
-
-label {
-  font-size: 1.1em;
+.section-title {
+  margin-top: 12px;
   font-weight: bold;
-}
-
-input, select {
-  width: 100%;
-  padding: 14px;
-  font-size: 1.2em;
-  margin: 10px 0 20px 0;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-button {
-  width: 100%;
-  padding: 16px;
-  font-size: 1.3em;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  margin-top: 10px;
-}
-
-.result {
-  margin-top: 25px;
-  padding: 18px;
-  background: #fff;
-  border-radius: 10px;
-  font-size: 1.2em;
-  line-height: 1.6em;
-  border: 1px solid #ddd;
 }
 </style>
 </head>
-
 <body>
-<div class="container">
 
-<h2>4:6メソッド計算機</h2>
+<h2>mk46 v2（4:6メソッド）</h2>
 
-<label>出来上がり量 (ml)</label>
-<input type="number" id="total" value="500">
+<label>出来上がり量（g）：</label>
+<input type="number" id="final" value="500"><br><br>
 
-<label>豆量 (g) ※空なら自動計算</label>
-<input type="number" id="beans">
+<label>豆量（g）：</label>
+<input type="number" id="beans" value="33.3"><br><br>
 
-<label>1投目倍率（豆の◯倍）</label>
+<label>蒸らし倍率：</label>
 <select id="ratio">
-  <option value="2.0">2.0倍</option>
-  <option value="2.2">2.2倍</option>
-  <option value="2.3" selected>2.3倍（推奨）</option>
-  <option value="2.5">2.5倍</option>
+  <option value="2.0">2.0倍（軽め）</option>
+  <option value="2.3" selected>2.3倍（標準）</option>
+  <option value="2.5">2.5倍（濃いめ）</option>
+  <option value="3.0">3.0倍（しっかり）</option>
 </select>
 
-<label>濃度</label>
-<select id="strength">
-  <option value="normal">普通（2回）</option>
-  <option value="light">軽め（1回）</option>
-  <option value="strong">濃いめ（3回）</option>
-</select>
-
+<br><br>
 <button onclick="calc()">計算する</button>
 
-<div class="result" id="result"></div>
-
-</div>
+<div id="result"></div>
 
 <script>
+function pad(n) {
+  // 桁揃え（最大3桁想定）
+  if (n < 10) return "  " + n;   // 1桁 → 前に2スペース
+  if (n < 100) return " " + n;   // 2桁 → 前に1スペース
+  return n;                      // 3桁 → そのまま
+}
+
 function calc() {
-  const total = parseFloat(document.getElementById("total").value);
-  const beansInput = document.getElementById("beans").value;
-  const ratio = parseFloat(document.getElementById("ratio").value);
-  const strength = document.getElementById("strength").value;
+  const final = Number(document.getElementById("final").value);
+  const beans = Number(document.getElementById("beans").value);
+  const ratio = Number(document.getElementById("ratio").value);
 
-  const beans = beansInput ? parseFloat(beansInput) : (total / 15);
+  const first = Math.round(beans * ratio);   // 1投目
+  const frontTotal = Math.round(final * 0.4); // 前半40%
+  const second = frontTotal - first;          // 2投目
 
-  const front = total * 0.4;
-  const back = total * 0.6;
+  const backTotal = final - frontTotal;       // 後半60%
+  const backEach = Math.round(backTotal / 2); // 3投目・4投目
 
-  const first = beans * ratio;
-  const second = front - first;
+  let cum = 0;
+  let out = "";
 
-  let splits = 2;
-  if (strength === "light") splits = 1;
-  if (strength === "strong") splits = 3;
+  out += "【4:6メソッド】\n\n";
+  out += `豆量：${beans} g\n\n`;
 
-  const backPer = back / splits;
+  out += "── 前半40%（フレーバー） ──\n";
+  cum += first;
+  out += `1投目： ${pad(first)} g   （累計 ${pad(cum)} g）\n`;
 
-  document.getElementById("result").innerHTML =
-    "<b>豆量：</b>" + beans.toFixed(1) + " g<br>" +
-    "<b>前半40％：</b>" + front.toFixed(0) + " ml<br>" +
-    "・1投目（豆×" + ratio + "）： " + first.toFixed(0) + " ml<br>" +
-    "・2投目： " + second.toFixed(0) + " ml<br><br>" +
-    "<b>後半60％：</b>" + back.toFixed(0) + " ml<br>" +
-    "・回数：" + splits + " 回<br>" +
-    "・1回あたり：" + backPer.toFixed(0) + " ml";
+  cum += second;
+  out += `2投目： ${pad(second)} g   （累計 ${pad(cum)} g）\n\n`;
 
-  // ▼▼ 自動スクロール ▼▼
-  document.getElementById("result").scrollIntoView({ behavior: "smooth" });
+  out += "── 後半60%（濃度調整） ──\n";
+  cum += backEach;
+  out += `3投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
+
+  cum += backEach;
+  out += `4投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
+
+  document.getElementById("result").textContent = out;
 }
 </script>
 
