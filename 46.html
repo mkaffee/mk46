@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>mk46 v2.3</title>
+<title>mk46 v2.5</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -17,7 +17,7 @@ label {
   font-size: 18px;
 }
 
-input, select {
+input {
   font-size: 20px;
   padding: 8px;
   width: 100%;
@@ -25,25 +25,47 @@ input, select {
   margin-top: 4px;
 }
 
+/* コーヒー色ボタン */
 button {
   width: 100%;
   padding: 14px;
   font-size: 20px;
   margin-top: 16px;
-
-  background: #6F4E37;   /* コーヒー色 */
+  background: #6F4E37;
   color: white;
   border: none;
   border-radius: 6px;
-
   transition: background 0.2s;
 }
-
 button:active {
-  background: #8B5E3C;   /* 押したとき少し明るく */
+  background: #8B5E3C;
 }
 
-/* 結果表示欄の枠＋スクロール */
+/* 倍率ボタンUI */
+.ratio-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ratio-btn {
+  flex: 1;
+  padding: 12px 0;
+  font-size: 18px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  user-select: none;
+}
+
+.ratio-btn.active {
+  background: #6F4E37;
+  color: white;
+  border-color: #6F4E37;
+}
+
+/* 結果表示欄 */
 #result {
   margin-top: 24px;
   font-family: monospace;
@@ -63,7 +85,7 @@ button:active {
 
 <body>
 
-<h2>mk46 v2.3（4:6メソッド）</h2>
+<h2>mk46 v2.5（4:6メソッド）</h2>
 
 <label>出来上がり量（g）：</label>
 <input type="number" id="final" value="500" oninput="autoBeans()">
@@ -72,25 +94,30 @@ button:active {
 <input type="number" id="beans" value="33.3">
 
 <label>蒸らし倍率：</label>
-<select id="ratio">
-  <option value="2.0">2.0倍（軽め）</option>
-  <option value="2.3" selected>2.3倍（標準）</option>
-  <option value="2.5">2.5倍（濃いめ）</option>
-  <option value="3.0">3.0倍（しっかり）</option>
-</select>
+<div class="ratio-buttons">
+  <div class="ratio-btn active" onclick="setRatio(2.5)">2.5</div>
+  <div class="ratio-btn" onclick="setRatio(2.3)">2.3</div>
+  <div class="ratio-btn" onclick="setRatio(2.7)">2.7</div>
+  <div class="ratio-btn" onclick="setRatio(3.0)">3.0</div>
+</div>
 
 <button onclick="calc()">計算する</button>
 
 <div id="result"></div>
 
 <script>
-function pad(n) {
-  if (n < 10) return "  " + n;
-  if (n < 100) return " " + n;
-  return n;
+let ratio = 2.5;  // デフォルト倍率
+
+function setRatio(r) {
+  ratio = r;
+
+  document.querySelectorAll('.ratio-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.textContent == r) btn.classList.add('active');
+  });
 }
 
-/* 出来上がり量から豆量を自動計算 */
+/* 出来上がり量から豆量を自動計算（÷15） */
 function autoBeans() {
   const final = Number(document.getElementById("final").value);
   if (final > 0) {
@@ -99,10 +126,15 @@ function autoBeans() {
   }
 }
 
+function pad(n) {
+  if (n < 10) return "  " + n;
+  if (n < 100) return " " + n;
+  return n;
+}
+
 function calc() {
   const final = Number(document.getElementById("final").value);
   const beans = Number(document.getElementById("beans").value);
-  const ratio = Number(document.getElementById("ratio").value);
 
   const first = Math.round(beans * ratio);
   const frontTotal = Math.round(final * 0.4);
