@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>mk46 v2.8（4:6メソッド）</title>
+<title>mk46 v2.9（4:6メソッド）</title>
 
 <style>
   body {
@@ -43,8 +43,25 @@
     flex: 1;
   }
 
+  /* ★ 倍率ボタンの中央揃え */
+  .ratio-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
   .ratio-buttons button {
-    margin-right: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: #e0e0e0;
+  }
+
+  /* ★ 選択中の倍率ボタン（コーヒー色） */
+  .ratio-selected {
+    background: #8B4513 !important;
+    color: white !important;
   }
 
   #result {
@@ -54,13 +71,64 @@
     border-radius: 6px;
     white-space: pre-line;
   }
+
+  /* ★ モーダル（背景） */
+  #modal-bg {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4); /* Aタイプ */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  /* ★ モーダル本体 */
+  #modal-box {
+    background: white;
+    width: 80%;
+    max-width: 360px;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  #modal-title {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .modal-item {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    font-size: 1.1rem;
+  }
+
+  .modal-item:last-child {
+    border-bottom: none;
+  }
+
+  .modal-item:active {
+    background: #f0f0f0;
+  }
+
+  #modal-cancel {
+    margin-top: 12px;
+    padding: 12px;
+    text-align: center;
+    background: #eee;
+    border-radius: 8px;
+    font-size: 1.1rem;
+  }
 </style>
 </head>
 
 <body>
 <div id="wrap">
 
-<h2>mk46 v2.8（4:6メソッド）</h2>
+<h2>mk46 v2.9（4:6メソッド）</h2>
 
 <div class="row">
   <input id="final" type="number" placeholder="出来上がり(g)">
@@ -75,10 +143,10 @@
 
 <p>蒸らし倍率：</p>
 <div class="ratio-buttons">
-  <button onclick="setRatio(2.3)">2.3</button>
-  <button onclick="setRatio(2.5)">2.5</button>
-  <button onclick="setRatio(2.7)">2.7</button>
-  <button onclick="setRatio(3.0)">3.0</button>
+  <button onclick="setRatio(2.3, this)">2.3</button>
+  <button onclick="setRatio(2.5, this)">2.5</button>
+  <button onclick="setRatio(2.7, this)">2.7</button>
+  <button onclick="setRatio(3.0, this)">3.0</button>
 </div>
 
 <button onclick="calc()">計算する</button>
@@ -86,6 +154,15 @@
 <div id="result"></div>
 
 </div><!-- wrap end -->
+
+<!-- ★ モーダル -->
+<div id="modal-bg">
+  <div id="modal-box">
+    <div id="modal-title">豆を選択</div>
+    <div id="modal-list"></div>
+    <div id="modal-cancel">キャンセル</div>
+  </div>
+</div>
 
 <script>
 let beanData = JSON.parse(localStorage.getItem("beanData") || "{}");
@@ -98,6 +175,10 @@ const beanList = document.getElementById("beanList");
 const beanDelete = document.getElementById("beanDelete");
 const result = document.getElementById("result");
 
+const modalBg = document.getElementById("modal-bg");
+const modalList = document.getElementById("modal-list");
+const modalCancel = document.getElementById("modal-cancel");
+
 document.addEventListener("DOMContentLoaded", () => {
   if (lastBean && beanData[lastBean] !== undefined) {
     beanName.value = lastBean;
@@ -106,24 +187,35 @@ document.addEventListener("DOMContentLoaded", () => {
   updateBeanList();
 });
 
-function updateBeanList() {
-  beanList.textContent = "リスト(" + Object.keys(beanData).length + ")";
-}
-
+/* ★ モーダル表示 */
 beanList.addEventListener("click", () => {
   const names = Object.keys(beanData);
   if (names.length === 0) {
     alert("保存された豆はありません");
     return;
   }
-  const pick = prompt("豆を選択:\n" + names.join("\n"));
-  if (pick && beanData[pick] !== undefined) {
-    beanName.value = pick;
-    beans.value = beanData[pick];
-    lastBean = pick;
-    localStorage.setItem("lastBean", pick);
-  }
+
+  modalList.innerHTML = "";
+  names.forEach(name => {
+    const div = document.createElement("div");
+    div.className = "modal-item";
+    div.textContent = name;
+    div.onclick = () => {
+      beanName.value = name;
+      beans.value = beanData[name];
+      lastBean = name;
+      localStorage.setItem("lastBean", name);
+      modalBg.style.display = "none";
+    };
+    modalList.appendChild(div);
+  });
+
+  modalBg.style.display = "flex";
 });
+
+/* モーダル閉じる */
+modalCancel.onclick = () => modalBg.style.display = "none";
+modalBg.onclick = e => { if (e.target === modalBg) modalBg.style.display = "none"; };
 
 beanDelete.addEventListener("click", () => {
   const name = beanName.value.trim();
@@ -138,16 +230,25 @@ beanDelete.addEventListener("click", () => {
   }
 });
 
-function setRatio(r) {
+function updateBeanList() {
+  beanList.textContent = "リスト(" + Object.keys(beanData).length + ")";
+}
+
+/* ★ 倍率ボタンの色切り替え */
+function setRatio(r, btn) {
   if (!final.value) return;
   beans.value = (final.value / r).toFixed(1);
+
+  document.querySelectorAll(".ratio-buttons button")
+    .forEach(b => b.classList.remove("ratio-selected"));
+  btn.classList.add("ratio-selected");
 }
 
 function calc() {
   const name = beanName.value.trim();
   const beansVal = Number(beans.value);
 
-  // ★ 変更があったときだけ保存
+  /* ★ 変更があったときだけ保存 */
   if (name) {
     const prev = beanData[name];
     if (prev !== beansVal) {
