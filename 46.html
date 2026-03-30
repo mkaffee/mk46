@@ -50,4 +50,212 @@ button:active {
 #deleteBtn { flex: 2; }
 
 /* 蒸らし倍率 */
-.ratio-buttons
+.ratio-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.ratio-btn {
+  flex: 1;
+  padding: 12px 0;
+  font-size: 18px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+}
+.ratio-btn.active {
+  background: #6F4E37;
+  color: white;
+  border-color: #6F4E37;
+}
+
+/* 結果表示 */
+#result {
+  margin-top: 24px;
+  font-family: monospace;
+  white-space: pre;
+  font-size: 18px;
+  line-height: 1.6;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+</style>
+</head>
+
+<body>
+
+<h2>mk46 v2.7（4:6メソッド）</h2>
+
+<!-- 出来上がり量＋豆量（1行） -->
+<div class="row">
+  <input type="number" id="final" placeholder="出来上がり(g)" value="500" oninput="autoBeans()">
+  <input type="number" id="beans" placeholder="豆量(g)" value="33.3">
+</div>
+
+<!-- 豆名＋リスト＋削除（1行） -->
+<div class="bean-row">
+  <input type="text" id="beanName" placeholder="豆名" oninput="beanNameChanged()">
+  <select id="beanList" onchange="selectBean()">
+    <option value="">リスト</option>
+  </select>
+  <button id="deleteBtn" onclick="deleteBean()">削除</button>
+</div>
+
+<label>蒸らし倍率：</label>
+<div class="ratio-buttons">
+  <div class="ratio-btn" onclick="setRatio(2.3)">2.3</div>
+  <div class="ratio-btn active" onclick="setRatio(2.5)">2.5</div>
+  <div class="ratio-btn" onclick="setRatio(2.7)">2.7</div>
+  <div class="ratio-btn" onclick="setRatio(3.0)">3.0</div>
+</div>
+
+<button style="width:100%; margin-top:16px;" onclick="calc()">計算する</button>
+
+<div id="result"></div>
+
+<script>
+let ratio = 2.5;
+let beanData = {};
+let lastBean = "";
+
+/* 初期ロード */
+document.addEventListener("DOMContentLoaded", function() {
+  const saved = localStorage.getItem("beanData");
+  if (saved) beanData = JSON.parse(saved);
+
+  lastBean = localStorage.getItem("lastBean") || "";
+  updateBeanList();
+
+  if (lastBean && beanData[lastBean] !== undefined) {
+    beanName.value = lastBean;
+    beans.value = beanData[lastBean];
+  }
+});
+
+/* 豆名入力時 */
+function beanNameChanged() {
+  const name = beanName.value.trim();
+  if (beanData[name] !== undefined) {
+    beans.value = beanData[name];
+  }
+}
+
+/* リスト選択 */
+function selectBean() {
+  const name = beanList.value;
+  if (!name) return;
+
+  beanName.value = name;
+  beans.value = beanData[name];
+  lastBean = name;
+  localStorage.setItem("lastBean", lastBean);
+}
+
+/* 豆量変更時に保存 */
+beans.addEventListener("input", function() {
+  const name = beanName.value.trim();
+  if (!name) return;
+
+  beanData[name] = Number(this.value);
+  localStorage.setItem("beanData", JSON.stringify(beanData));
+  lastBean = name;
+  localStorage.setItem("lastBean", lastBean);
+  updateBeanList();
+});
+
+/* リスト更新 */
+function updateBeanList() {
+  beanList.innerHTML = '<option value="">リスト</option>';
+  Object.keys(beanData).forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    beanList.appendChild(opt);
+  });
+}
+
+/* 削除 */
+function deleteBean() {
+  const name = beanName.value.trim();
+  if (!name || beanData[name] === undefined) return;
+
+  delete beanData[name];
+  localStorage.setItem("beanData", JSON.stringify(beanData));
+
+  if (lastBean === name) {
+    localStorage.removeItem("lastBean");
+    lastBean = "";
+  }
+
+  beanName.value = "";
+  autoBeans();
+  updateBeanList();
+}
+
+/* 出来上がり量から豆量を自動計算 */
+function autoBeans() {
+  const finalVal = Number(final.value);
+  if (finalVal > 0) {
+    beans.value = (finalVal / 15).toFixed(1);
+  }
+}
+
+/* 倍率選択 */
+function setRatio(r) {
+  ratio = r;
+  document.querySelectorAll('.ratio-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.textContent == r) btn.classList.add('active');
+  });
+}
+
+/* 表示整形 */
+function pad(n) {
+  if (n < 10) return "  " + n;
+  if (n < 100) return " " + n;
+  return n;
+}
+
+/* 計算 */
+function calc() {
+  const finalVal = Number(final.value);
+  const beansVal = Number(beans.value);
+  const name = beanName.value.trim() || "豆名なし";
+
+  const first = Math.round(beansVal * ratio);
+  const frontTotal = Math.round(finalVal * 0.4);
+  const second = frontTotal - first;
+
+  const backTotal = finalVal - frontTotal;
+  const backEach = Math.round(backTotal / 2);
+
+  let cum = 0;
+  let out = "";
+
+  out += `【4:6メソッド】  ${name}：${beansVal} g\n\n`;
+
+  out += "── 前半40%（フレーバー）──\n";
+  cum += first;
+  out += `1投目：${pad(first)} g   （累計 ${pad(cum)} g）\n`;
+
+  cum += second;
+  out += `2投目：${pad(second)} g   （累計 ${pad(cum)} g）\n\n`;
+
+  out += "── 後半60%（濃度調整）──\n";
+  cum += backEach;
+  out += `3投目：${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
+
+  cum += backEach;
+  out += `4投目：${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
+
+  result.innerText = out;
+  result.scrollIntoView({ behavior: "smooth" });
+}
+</script>
+
+</body>
+</html>
