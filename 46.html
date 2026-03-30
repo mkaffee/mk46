@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>mk46 v2.6</title>
+<title>mk46 v2.7</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -13,20 +13,13 @@ body {
   margin: 0 auto;
 }
 
-label {
-  font-size: 18px;
-}
-
-input, select {
+input, select, button {
   font-size: 18px;
   padding: 8px;
   box-sizing: border-box;
 }
 
 button {
-  padding: 10px 14px;
-  font-size: 16px;
-  margin-left: 6px;
   background: #6F4E37;
   color: white;
   border: none;
@@ -36,221 +29,25 @@ button:active {
   background: #8B5E3C;
 }
 
-.ratio-buttons {
+/* 1行入力（出来上がり量＋豆量） */
+.row {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+  margin-bottom: 12px;
 }
-
-.ratio-btn {
+.row input {
   flex: 1;
-  padding: 12px 0;
-  font-size: 18px;
-  text-align: center;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: #fff;
-  user-select: none;
 }
 
-.ratio-btn.active {
-  background: #6F4E37;
-  color: white;
-  border-color: #6F4E37;
+/* 豆名行 */
+.bean-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
 }
+#beanName { flex: 6; }
+#beanList { flex: 3; }
+#deleteBtn { flex: 2; }
 
-#result {
-  margin-top: 24px;
-  font-family: monospace;
-  white-space: pre;
-  font-size: 18px;
-  line-height: 1.6;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 12px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-</style>
-</head>
-
-<body>
-
-<h2>mk46 v2.6（4:6メソッド）</h2>
-
-<label>出来上がり量（g）：</label>
-<input type="number" id="final" value="500" oninput="autoBeans()">
-
-<label>豆量（g）：</label>
-<input type="number" id="beans" value="33.3">
-
-<br><br>
-
-<label>豆名：</label>
-<input type="text" id="beanName" style="width:45%;" oninput="beanNameChanged()">
-
-<select id="beanList" style="width:25%;" onchange="selectBean()">
-  <option value="">リスト</option>
-</select>
-
-<button onclick="deleteBean()">削除</button>
-
-<br><br>
-
-<label>蒸らし倍率：</label>
-<div class="ratio-buttons">
-  <div class="ratio-btn" onclick="setRatio(2.3)">2.3</div>
-  <div class="ratio-btn active" onclick="setRatio(2.5)">2.5</div>
-  <div class="ratio-btn" onclick="setRatio(2.7)">2.7</div>
-  <div class="ratio-btn" onclick="setRatio(3.0)">3.0</div>
-</div>
-
-<button style="width:100%; margin-top:16px;" onclick="calc()">計算する</button>
-
-<div id="result"></div>
-
-<script>
-let ratio = 2.5;
-let beanData = {};
-let lastBean = "";
-
-/* 初期ロード */
-window.onload = function() {
-  const saved = localStorage.getItem("beanData");
-  if (saved) beanData = JSON.parse(saved);
-
-  lastBean = localStorage.getItem("lastBean") || "";
-
-  updateBeanList();
-
-  if (lastBean && beanData[lastBean] !== undefined) {
-    document.getElementById("beanName").value = lastBean;
-    document.getElementById("beans").value = beanData[lastBean];
-  }
-};
-
-/* 豆名入力時 */
-function beanNameChanged() {
-  const name = document.getElementById("beanName").value;
-  if (beanData[name] !== undefined) {
-    document.getElementById("beans").value = beanData[name];
-  }
-}
-
-/* リストから選択 */
-function selectBean() {
-  const name = document.getElementById("beanList").value;
-  if (!name) return;
-
-  document.getElementById("beanName").value = name;
-  document.getElementById("beans").value = beanData[name];
-  lastBean = name;
-  localStorage.setItem("lastBean", lastBean);
-}
-
-/* 豆量変更時に保存 */
-document.getElementById("beans").addEventListener("input", function() {
-  const name = document.getElementById("beanName").value.trim();
-  if (!name) return;
-
-  beanData[name] = Number(this.value);
-  localStorage.setItem("beanData", JSON.stringify(beanData));
-  lastBean = name;
-  localStorage.setItem("lastBean", lastBean);
-  updateBeanList();
-});
-
-/* リスト更新 */
-function updateBeanList() {
-  const list = document.getElementById("beanList");
-  list.innerHTML = '<option value="">リスト</option>';
-
-  Object.keys(beanData).forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    list.appendChild(opt);
-  });
-}
-
-/* 削除 */
-function deleteBean() {
-  const name = document.getElementById("beanName").value.trim();
-  if (!name || beanData[name] === undefined) return;
-
-  delete beanData[name];
-  localStorage.setItem("beanData", JSON.stringify(beanData));
-
-  if (lastBean === name) {
-    localStorage.removeItem("lastBean");
-    lastBean = "";
-  }
-
-  document.getElementById("beanName").value = "";
-  autoBeans();
-  updateBeanList();
-}
-
-/* 出来上がり量から豆量を自動計算 */
-function autoBeans() {
-  const final = Number(document.getElementById("final").value);
-  if (final > 0) {
-    const beans = (final / 15).toFixed(1);
-    document.getElementById("beans").value = beans;
-  }
-}
-
-/* 倍率選択 */
-function setRatio(r) {
-  ratio = r;
-  document.querySelectorAll('.ratio-btn').forEach(btn => {
-    btn.classList.remove('active');
-    if (btn.textContent == r) btn.classList.add('active');
-  });
-}
-
-/* 表示整形 */
-function pad(n) {
-  if (n < 10) return "  " + n;
-  if (n < 100) return " " + n;
-  return n;
-}
-
-/* 計算 */
-function calc() {
-  const final = Number(document.getElementById("final").value);
-  const beans = Number(document.getElementById("beans").value);
-
-  const first = Math.round(beans * ratio);
-  const frontTotal = Math.round(final * 0.4);
-  const second = frontTotal - first;
-
-  const backTotal = final - frontTotal;
-  const backEach = Math.round(backTotal / 2);
-
-  let cum = 0;
-  let out = "";
-
-  out += "【4:6メソッド】  豆量：" + beans + " g\n\n";
-
-  out += "── 前半40%（フレーバー） ──\n";
-  cum += first;
-  out += `1投目： ${pad(first)} g   （累計 ${pad(cum)} g）\n`;
-
-  cum += second;
-  out += `2投目： ${pad(second)} g   （累計 ${pad(cum)} g）\n\n`;
-
-  out += "── 後半60%（濃度調整） ──\n";
-  cum += backEach;
-  out += `3投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
-
-  cum += backEach;
-  out += `4投目： ${pad(backEach)} g   （累計 ${pad(cum)} g）\n`;
-
-  document.getElementById("result").innerText = out;
-  document.getElementById("result").scrollIntoView({ behavior: "smooth" });
-}
-</script>
-
-</body>
-</html>
+/* 蒸らし倍率 */
+.ratio-buttons
