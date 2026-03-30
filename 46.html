@@ -1,9 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>mk46 v2.9.1（4:6メソッド）</title>
+<title>mk46 v2.9.2（4:6メソッド）</title>
 
 <style>
   body {
@@ -12,7 +13,6 @@
     background: #fafafa;
   }
 
-  /* 全体レイアウト固定 */
   #wrap {
     max-width: 480px;
     margin: 0 auto;
@@ -22,52 +22,54 @@
     box-sizing: border-box;
   }
 
+  h2 {
+    font-size: 1.2rem;
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
   input, button {
     font-size: 1.1rem;
-    padding: 6px;
-    margin: 4px 0;
   }
 
   input {
     width: 100%;
+    padding: 6px 8px;
     box-sizing: border-box;
+    margin-top: 4px;
   }
 
-  /* ラベル＋入力欄（左ラベル固定幅） */
-  .row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+  button {
+    padding: 6px 10px;
   }
 
-  .row label {
-    width: 110px;
-    font-size: 1rem;
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    font-size: 0.95rem;
     color: #444;
   }
 
-  .row input {
-    flex: 1;
-  }
-
-  /* 品種のボタン行（ラベルなし） */
-  .row-buttons {
+  .field-buttons {
     display: flex;
-    flex-direction: row;
-    align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
-    margin-left: 110px; /* ラベル幅と揃える */
+    margin-top: 6px;
   }
 
-  /* 蒸らし倍率ボタン */
+  .ratio-label {
+    margin-top: 8px;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+    color: #444;
+  }
+
   .ratio-buttons {
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin: 8px 0 12px;
+    margin-bottom: 12px;
   }
 
   .ratio-buttons button {
@@ -83,11 +85,12 @@
   }
 
   #result {
-    margin-top: 20px;
+    margin-top: 18px;
     padding: 12px;
     background: #f0f0f0;
     border-radius: 6px;
     white-space: pre-line;
+    font-size: 0.95rem;
   }
 
   /* モーダル背景 */
@@ -113,15 +116,15 @@
   }
 
   #modal-title {
-    font-size: 1.2rem;
-    margin-bottom: 12px;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
     text-align: center;
   }
 
   .modal-item {
-    padding: 12px;
+    padding: 10px 8px;
     border-bottom: 1px solid #ddd;
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .modal-item:last-child {
@@ -133,12 +136,12 @@
   }
 
   #modal-cancel {
-    margin-top: 12px;
-    padding: 12px;
+    margin-top: 10px;
+    padding: 10px;
     text-align: center;
     background: #eee;
     border-radius: 8px;
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 </style>
 </head>
@@ -146,38 +149,36 @@
 <body>
 <div id="wrap">
 
-<h2>mk46 v2.9.1（4:6メソッド）</h2>
+<h2>mk46 v2.9.2（4:6メソッド）</h2>
 
 <!-- 品種 -->
-<div class="row">
+<div class="field">
   <label for="beanName">品種</label>
   <input id="beanName" type="text" placeholder="例：エチオピア">
-</div>
-
-<!-- 品種リスト／削除ボタン -->
-<div class="row-buttons">
-  <button id="beanList">リスト</button>
-  <button id="beanDelete">削除</button>
+  <div class="field-buttons">
+    <button id="beanList">品種リスト</button>
+    <button id="beanDelete">削除</button>
+  </div>
 </div>
 
 <!-- 出来上がり量 -->
-<div class="row">
+<div class="field">
   <label for="final">出来上がり(g)</label>
-  <input id="final" type="number" placeholder="500">
+  <input id="final" type="number" inputmode="decimal" placeholder="500">
 </div>
 
 <!-- 豆量 -->
-<div class="row">
+<div class="field">
   <label for="beans">豆量(g)</label>
-  <input id="beans" type="number" placeholder="33.3">
+  <input id="beans" type="number" inputmode="decimal" placeholder="33.3">
 </div>
 
-<p>蒸らし倍率：</p>
+<div class="ratio-label">蒸らし倍率（1投目の湯量）</div>
 <div class="ratio-buttons">
-  <button onclick="setRatio(2.3, this)">2.3</button>
-  <button onclick="setRatio(2.5, this)">2.5</button>
-  <button onclick="setRatio(2.7, this)">2.7</button>
-  <button onclick="setRatio(3.0, this)">3.0</button>
+  <button data-ratio="2.3" onclick="setRatio(2.3, this)">2.3</button>
+  <button data-ratio="2.5" onclick="setRatio(2.5, this)">2.5</button>
+  <button data-ratio="2.7" onclick="setRatio(2.7, this)">2.7</button>
+  <button data-ratio="3.0" onclick="setRatio(3.0, this)">3.0</button>
 </div>
 
 <button onclick="calc()">計算する</button>
@@ -189,7 +190,7 @@
 <!-- モーダル -->
 <div id="modal-bg">
   <div id="modal-box">
-    <div id="modal-title">豆を選択</div>
+    <div id="modal-title">品種リスト</div>
     <div id="modal-list"></div>
     <div id="modal-cancel">キャンセル</div>
   </div>
@@ -198,41 +199,53 @@
 <script>
 let beanData = JSON.parse(localStorage.getItem("beanData") || "{}");
 let lastBean = localStorage.getItem("lastBean") || "";
-let bloomRatio = null; // 将来使うならここに保持
+let bloomRatio = 2.5; // デフォルト蒸らし倍率
 
-const final = document.getElementById("final");
-const beans = document.getElementById("beans");
-const beanName = document.getElementById("beanName");
-const beanList = document.getElementById("beanList");
-const beanDelete = document.getElementById("beanDelete");
-const result = document.getElementById("result");
+const finalEl = document.getElementById("final");
+const beansEl = document.getElementById("beans");
+const beanNameEl = document.getElementById("beanName");
+const beanListBtn = document.getElementById("beanList");
+const beanDeleteBtn = document.getElementById("beanDelete");
+const resultEl = document.getElementById("result");
 
 const modalBg = document.getElementById("modal-bg");
 const modalList = document.getElementById("modal-list");
 const modalCancel = document.getElementById("modal-cancel");
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (lastBean && beanData[lastBean] !== undefined) {
-    beanName.value = lastBean;
-    beans.value = beanData[lastBean];
+  // 出来上がり量のデフォルト 500
+  if (!finalEl.value) {
+    finalEl.value = 500;
   }
-  updateBeanList();
+  // 豆量を 1:15 で自動計算
+  beansEl.value = (finalEl.value / 15).toFixed(1);
+
+  // 最後に使った品種を復元
+  if (lastBean && beanData[lastBean] !== undefined) {
+    beanNameEl.value = lastBean;
+    beansEl.value = beanData[lastBean];
+  }
+
+  updateBeanListLabel();
+  // デフォルト蒸らし倍率ボタンを選択状態に
+  const defaultBtn = document.querySelector('.ratio-buttons button[data-ratio="2.5"]');
+  if (defaultBtn) defaultBtn.classList.add("ratio-selected");
 });
 
 /* 出来上がり量 → 豆量自動計算（1:15） */
-final.addEventListener("input", () => {
-  if (!final.value) {
-    beans.value = "";
+finalEl.addEventListener("input", () => {
+  if (!finalEl.value) {
+    beansEl.value = "";
     return;
   }
-  beans.value = (final.value / 15).toFixed(1);
+  beansEl.value = (finalEl.value / 15).toFixed(1);
 });
 
-/* リストボタン → モーダル表示 */
-beanList.addEventListener("click", () => {
+/* 品種リストボタン → モーダル表示 */
+beanListBtn.addEventListener("click", () => {
   const names = Object.keys(beanData);
   if (names.length === 0) {
-    alert("保存された豆はありません");
+    alert("保存された品種はありません");
     return;
   }
 
@@ -242,10 +255,11 @@ beanList.addEventListener("click", () => {
     div.className = "modal-item";
     div.textContent = name;
     div.onclick = () => {
-      beanName.value = name;
-      beans.value = beanData[name];
+      beanNameEl.value = name;
+      beansEl.value = beanData[name];
       lastBean = name;
       localStorage.setItem("lastBean", name);
+      modalBg.style.display = "flex";
       modalBg.style.display = "none";
     };
     modalList.appendChild(div);
@@ -258,29 +272,33 @@ beanList.addEventListener("click", () => {
 modalCancel.onclick = () => modalBg.style.display = "none";
 modalBg.onclick = e => { if (e.target === modalBg) modalBg.style.display = "none"; };
 
-/* 削除ボタン */
-beanDelete.addEventListener("click", () => {
-  const name = beanName.value.trim();
+/* 品種削除 */
+beanDeleteBtn.addEventListener("click", () => {
+  const name = beanNameEl.value.trim();
   if (!name || beanData[name] === undefined) return;
 
   if (confirm(name + " を削除しますか？")) {
     delete beanData[name];
     localStorage.setItem("beanData", JSON.stringify(beanData));
-    beanName.value = "";
-    beans.value = "";
-    updateBeanList();
+    if (lastBean === name) {
+      lastBean = "";
+      localStorage.removeItem("lastBean");
+    }
+    beanNameEl.value = "";
+    beansEl.value = (finalEl.value ? (finalEl.value / 15).toFixed(1) : "");
+    updateBeanListLabel();
   }
 });
 
-/* リストボタンの件数表示更新 */
-function updateBeanList() {
-  beanList.textContent = "リスト(" + Object.keys(beanData).length + ")";
+/* 品種リストボタンのラベル更新 */
+function updateBeanListLabel() {
+  const count = Object.keys(beanData).length;
+  beanListBtn.textContent = "品種リスト" + (count ? " (" + count + ")" : "");
 }
 
-/* 蒸らし倍率ボタン（見た目だけ選択状態を持つ） */
+/* 蒸らし倍率ボタン（1投目の湯量に使用） */
 function setRatio(r, btn) {
   bloomRatio = r;
-
   document.querySelectorAll(".ratio-buttons button")
     .forEach(b => b.classList.remove("ratio-selected"));
   btn.classList.add("ratio-selected");
@@ -288,35 +306,41 @@ function setRatio(r, btn) {
 
 /* 計算本体 */
 function calc() {
-  const name = beanName.value.trim();
-  const beansVal = Number(beans.value);
+  const name = beanNameEl.value.trim();
+  const total = Number(finalEl.value);
+  const b = Number(beansEl.value);
 
-  // 変更があったときだけ保存（新規豆は必ず保存）
-  if (name) {
-    const prev = beanData[name];
-    if (prev !== beansVal) {
-      beanData[name] = beansVal;
-      localStorage.setItem("beanData", JSON.stringify(beanData));
-      lastBean = name;
-      localStorage.setItem("lastBean", lastBean);
-      updateBeanList();
-    }
-  }
-
-  if (!final.value || !beans.value) {
-    result.textContent = "出来上がり量と豆量を入力してください";
+  if (!total || !b) {
+    resultEl.textContent = "出来上がり量と豆量を入力してください";
     return;
   }
 
-  const total = Number(final.value);
-  const b = Number(beans.value);
+  // 品種保存（新規 or 変更時のみ）
+  if (name) {
+    const prev = beanData[name];
+    if (prev !== b) {
+      beanData[name] = b;
+      localStorage.setItem("beanData", JSON.stringify(beanData));
+      lastBean = name;
+      localStorage.setItem("lastBean", lastBean);
+      updateBeanListLabel();
+    }
+  }
 
-  const first = Math.round(total * 0.15);
-  const second = Math.round(total * 0.25);
-  const third = Math.round(total * 0.30);
+  // 1投目：豆量 × 蒸らし倍率
+  let first = Math.round(b * bloomRatio);
+
+  // 安全のため、1投目が全体を超えないようにクリップ
+  if (first >= total) first = total;
+
+  const remaining = total - first;
+
+  // 残り湯量を 4:6 で分割
+  const second = Math.round(remaining * 0.40);
+  const third  = Math.round(remaining * 0.30);
   const fourth = total - (first + second + third);
 
-  result.textContent =
+  resultEl.textContent =
     `【4:6メソッド】 ${name ? name + "：" : ""}${b} g\n\n` +
     "—— 前半40%（フレーバー） ——\n" +
     `1投目：${first} g　（累計 ${first} g）\n` +
