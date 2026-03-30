@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>mk46 v2.9（4:6メソッド）</title>
+<title>mk46 v2.9.1（4:6メソッド）</title>
 
 <style>
   body {
@@ -12,7 +12,7 @@
     background: #fafafa;
   }
 
-  /* ★ 全体を包む安定レイアウト */
+  /* 全体レイアウト固定 */
   #wrap {
     max-width: 480px;
     margin: 0 auto;
@@ -23,7 +23,7 @@
   }
 
   input, button {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     padding: 6px;
     margin: 4px 0;
   }
@@ -33,22 +33,41 @@
     box-sizing: border-box;
   }
 
+  /* ラベル＋入力欄（左ラベル固定幅） */
   .row {
     display: flex;
-    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 8px;
+  }
+
+  .row label {
+    width: 110px;
+    font-size: 1rem;
+    color: #444;
   }
 
   .row input {
     flex: 1;
   }
 
-  /* ★ 倍率ボタンの中央揃え */
+  /* 品種のボタン行（ラベルなし） */
+  .row-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    margin-left: 110px; /* ラベル幅と揃える */
+  }
+
+  /* 蒸らし倍率ボタン */
   .ratio-buttons {
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin-bottom: 12px;
+    margin: 8px 0 12px;
   }
 
   .ratio-buttons button {
@@ -58,10 +77,9 @@
     background: #e0e0e0;
   }
 
-  /* ★ 選択中の倍率ボタン（コーヒー色） */
   .ratio-selected {
     background: #8B4513 !important;
-    color: white !important;
+    color: #fff !important;
   }
 
   #result {
@@ -72,21 +90,21 @@
     white-space: pre-line;
   }
 
-  /* ★ モーダル（背景） */
+  /* モーダル背景 */
   #modal-bg {
     display: none;
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0,0,0,0.4); /* Aタイプ */
+    background: rgba(0,0,0,0.4);
     justify-content: center;
     align-items: center;
     z-index: 1000;
   }
 
-  /* ★ モーダル本体 */
+  /* モーダル本体 */
   #modal-box {
-    background: white;
+    background: #fff;
     width: 80%;
     max-width: 360px;
     border-radius: 12px;
@@ -128,17 +146,30 @@
 <body>
 <div id="wrap">
 
-<h2>mk46 v2.9（4:6メソッド）</h2>
+<h2>mk46 v2.9.1（4:6メソッド）</h2>
 
+<!-- 品種 -->
 <div class="row">
-  <input id="final" type="number" placeholder="出来上がり(g)">
-  <input id="beans" type="number" placeholder="豆量(g)">
+  <label for="beanName">品種</label>
+  <input id="beanName" type="text" placeholder="例：エチオピア">
 </div>
 
-<div class="row">
-  <input id="beanName" type="text" placeholder="豆名">
+<!-- 品種リスト／削除ボタン -->
+<div class="row-buttons">
   <button id="beanList">リスト</button>
   <button id="beanDelete">削除</button>
+</div>
+
+<!-- 出来上がり量 -->
+<div class="row">
+  <label for="final">出来上がり(g)</label>
+  <input id="final" type="number" placeholder="500">
+</div>
+
+<!-- 豆量 -->
+<div class="row">
+  <label for="beans">豆量(g)</label>
+  <input id="beans" type="number" placeholder="33.3">
 </div>
 
 <p>蒸らし倍率：</p>
@@ -155,7 +186,7 @@
 
 </div><!-- wrap end -->
 
-<!-- ★ モーダル -->
+<!-- モーダル -->
 <div id="modal-bg">
   <div id="modal-box">
     <div id="modal-title">豆を選択</div>
@@ -167,6 +198,7 @@
 <script>
 let beanData = JSON.parse(localStorage.getItem("beanData") || "{}");
 let lastBean = localStorage.getItem("lastBean") || "";
+let bloomRatio = null; // 将来使うならここに保持
 
 const final = document.getElementById("final");
 const beans = document.getElementById("beans");
@@ -187,7 +219,16 @@ document.addEventListener("DOMContentLoaded", () => {
   updateBeanList();
 });
 
-/* ★ モーダル表示 */
+/* 出来上がり量 → 豆量自動計算（1:15） */
+final.addEventListener("input", () => {
+  if (!final.value) {
+    beans.value = "";
+    return;
+  }
+  beans.value = (final.value / 15).toFixed(1);
+});
+
+/* リストボタン → モーダル表示 */
 beanList.addEventListener("click", () => {
   const names = Object.keys(beanData);
   if (names.length === 0) {
@@ -217,6 +258,7 @@ beanList.addEventListener("click", () => {
 modalCancel.onclick = () => modalBg.style.display = "none";
 modalBg.onclick = e => { if (e.target === modalBg) modalBg.style.display = "none"; };
 
+/* 削除ボタン */
 beanDelete.addEventListener("click", () => {
   const name = beanName.value.trim();
   if (!name || beanData[name] === undefined) return;
@@ -230,25 +272,26 @@ beanDelete.addEventListener("click", () => {
   }
 });
 
+/* リストボタンの件数表示更新 */
 function updateBeanList() {
   beanList.textContent = "リスト(" + Object.keys(beanData).length + ")";
 }
 
-/* ★ 倍率ボタンの色切り替え */
+/* 蒸らし倍率ボタン（見た目だけ選択状態を持つ） */
 function setRatio(r, btn) {
-  if (!final.value) return;
-  beans.value = (final.value / r).toFixed(1);
+  bloomRatio = r;
 
   document.querySelectorAll(".ratio-buttons button")
     .forEach(b => b.classList.remove("ratio-selected"));
   btn.classList.add("ratio-selected");
 }
 
+/* 計算本体 */
 function calc() {
   const name = beanName.value.trim();
   const beansVal = Number(beans.value);
 
-  /* ★ 変更があったときだけ保存 */
+  // 変更があったときだけ保存（新規豆は必ず保存）
   if (name) {
     const prev = beanData[name];
     if (prev !== beansVal) {
