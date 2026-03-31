@@ -301,7 +301,12 @@ function calc() {
 前半合計：${Math.round(front)} g
 後半合計：${Math.round(back)} g`;
 
-  document.getElementById("result").textContent = text;
+ document.getElementById("result").textContent = text;
+
+setTimeout(() => {
+  document.getElementById("result").scrollIntoView({ behavior: "smooth" });
+}, 10);
+
 }
 </script>
 
