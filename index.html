@@ -2,322 +2,197 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>mk46 v2.9.4</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
+<title>4:6 Method Brewer</title>
 <style>
 body {
-  font-family: sans-serif;
-  margin: 20px;
+  font-family: monospace;
+  padding: 16px;
+  line-height: 1.6;
+}
+
+input {
+  width: 100%;
+  padding: 6px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.row input {
+  flex: 1;
+}
+
+button {
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-size: 16px;
+}
+
+#result {
+  white-space: pre;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #ccc;
   background: #fafafa;
 }
 
-/* 入力欄 */
-input {
-  width: 100%;
-  padding: 10px;
-  margin: 6px 0 14px;
-  font-size: 1.1rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+.listBox {
+  margin-top: 6px;
 }
 
-/* スマホ風ボタン共通 */
-button {
-  padding: 12px 0;
-  border-radius: 10px;
-  border: none;
-  background: #f2f2f2;
-  color: #333;
-  font-size: 1.1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-  transition: background 0.15s, transform 0.1s;
-}
-
-button:active {
-  background: #e0e0e0;
-  transform: scale(0.97);
-}
-
-/* 蒸らし倍率ボタン */
-.ratio-buttons {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-.ratio-buttons button {
-  flex: 1;
-}
-
-.ratio-selected {
-  background: #8B4513 !important;
-  color: #fff !important;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important;
-}
-
-/* 計算ボタン */
-.calc-btn {
-  width: 100%;
-  background: #8B4513;
-  color: #fff;
-  font-size: 1.2rem;
-  margin-top: 10px;
-}
-
-.calc-btn:active {
-  background: #6f3610;
-}
-
-/* 小ボタン（削除・クリア・リスト） */
-.small-btns {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.small-btns button {
-  flex: 1;
-}
-
-/* 結果表示 */
-#result {
-  white-space: pre-wrap;
-  font-family: monospace;
-  font-size: 1.1rem;
-  line-height: 1.4;
-  background: #fff;
-  padding: 14px;
-  border-radius: 10px;
-  margin-top: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* モーダル（品種リスト） */
-#modal {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.4);
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
-
-#modalContent {
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  width: 80%;
-  max-width: 300px;
-}
-
-#modalContent div {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-#modalContent div:last-child {
-  border-bottom: none;
-}
-
-#modalContent div:hover {
-  background: #f0f0f0;
-  cursor: pointer;
+.listBox button {
+  margin-left: 6px;
 }
 </style>
 </head>
-
 <body>
 
-<h2>mk46 v2.9.4</h2>
+<h2>4:6 Method Brewer</h2>
 
+<!-- 品種 -->
 <label>品種</label>
-<input id="beanName" placeholder="例：ケニア">
-
-<div class="small-btns">
-  <button onclick="openList()">品種リスト</button>
+<input id="beanName" placeholder="例：エチオピア ナチュラル">
+<div class="listBox">
+  <select id="beanList"></select>
   <button onclick="deleteBean()">削除</button>
   <button onclick="clearAll()">クリア</button>
 </div>
 
-<label>出来上がり量 (g)</label>
-<input id="final" type="number" placeholder="例：500">
-
-<label>豆量 (g)</label>
-<input id="beans" type="number" placeholder="自動計算されます">
-
-<label>蒸らし倍率</label>
-<div class="ratio-buttons">
-  <button onclick="setRatio(2.3)">2.3</button>
-  <button onclick="setRatio(2.5)">2.5</button>
-  <button onclick="setRatio(2.7)">2.7</button>
-  <button onclick="setRatio(3.0)">3.0</button>
+<!-- 出来上がり量・豆量（横並び） -->
+<div class="row">
+  <input id="final" type="number" placeholder="出来上がり(g)">
+  <input id="beans" type="number" placeholder="豆量(g)">
 </div>
 
-<button class="calc-btn" onclick="calc()">4:6メソッド レシピ生成</button>
+<button onclick="calc()">計算する</button>
 
 <pre id="result"></pre>
 
-<!-- モーダル -->
-<div id="modal" onclick="closeList()">
-  <div id="modalContent" onclick="event.stopPropagation()"></div>
-</div>
-
 <script>
-let beanData = JSON.parse(localStorage.getItem("beanData") || "{}");
-let lastBean = localStorage.getItem("lastBean") || "";
-let bloomRatio = 2.5;
-
-/* 旧データ変換 */
-for (const k in beanData) {
-  if (typeof beanData[k] === "number") {
-    beanData[k] = { final: "", beans: beanData[k] };
-  }
-}
-localStorage.setItem("beanData", JSON.stringify(beanData));
-
-/* 初期ロード */
-if (lastBean && beanData[lastBean]) loadBean(lastBean);
-
-/* 蒸らし倍率 */
-function setRatio(v) {
-  bloomRatio = v;
-  document.querySelectorAll(".ratio-buttons button").forEach(b => b.classList.remove("ratio-selected"));
-  event.target.classList.add("ratio-selected");
-}
-
-/* 品種入力時 */
-document.getElementById("beanName").addEventListener("input", e => {
-  const name = e.target.value;
-  if (beanData[name]) loadBean(name);
-});
-
-/* 品種読み込み */
-function loadBean(name) {
-  const d = beanData[name];
-  document.getElementById("beanName").value = name;
-  document.getElementById("final").value = d.final;
-  document.getElementById("beans").value = d.beans;
-  lastBean = name;
-  localStorage.setItem("lastBean", name);
-}
-
-/* 出来上がり変更時 → 豆量再計算 */
-document.getElementById("final").addEventListener("input", () => {
-  const f = Number(document.getElementById("final").value);
-  if (f > 0) {
-    document.getElementById("beans").value = (f / 15).toFixed(1);
-  }
-});
-
-/* クリア */
-function clearAll() {
-  document.getElementById("beanName").value = "";
-  document.getElementById("final").value = "";
-  document.getElementById("beans").value = "";
-}
-
-/* 削除 */
-function deleteBean() {
-  const name = document.getElementById("beanName").value;
-  if (beanData[name]) {
-    delete beanData[name];
-    localStorage.setItem("beanData", JSON.stringify(beanData));
-    clearAll();
-  }
-}
-
-/* 品種リスト表示 */
-function openList() {
-  const modal = document.getElementById("modal");
-  const content = document.getElementById("modalContent");
-  content.innerHTML = "";
-
-  for (const k in beanData) {
-    const div = document.createElement("div");
-    div.textContent = k;
-    div.onclick = () => {
-      loadBean(k);
-      closeList();
-    };
-    content.appendChild(div);
-  }
-
-  modal.style.display = "flex";
-}
-
-function closeList() {
-  document.getElementById("modal").style.display = "none";
-}
+const beanNameEl = document.getElementById("beanName");
+const finalEl = document.getElementById("final");
+const beansEl = document.getElementById("beans");
+const listEl = document.getElementById("beanList");
+const resultEl = document.getElementById("result");
 
 function pad3(n) {
   return String(n).padStart(3, " ");
 }
-  
-/* 計算本体 */
-function calc() {
-  const name = document.getElementById("beanName").value;
-  const total = Number(document.getElementById("final").value);
-  const beans = Number(document.getElementById("beans").value);
 
-  if (!name || !total || !beans) {
-    document.getElementById("result").textContent = "入力が不足しています。";
+function saveBean() {
+  const name = beanNameEl.value.trim();
+  if (!name) return;
+  const data = {
+    final: finalEl.value,
+    beans: beansEl.value
+  };
+  localStorage.setItem("bean_" + name, JSON.stringify(data));
+  loadList();
+}
+
+function loadList() {
+  listEl.innerHTML = "";
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k.startsWith("bean_")) {
+      const opt = document.createElement("option");
+      opt.value = k.substring(5);
+      opt.textContent = k.substring(5);
+      listEl.appendChild(opt);
+    }
+  }
+}
+
+function deleteBean() {
+  const name = listEl.value;
+  if (!name) return;
+  localStorage.removeItem("bean_" + name);
+  loadList();
+}
+
+function clearAll() {
+  beanNameEl.value = "";
+  finalEl.value = "";
+  beansEl.value = "";
+}
+
+listEl.addEventListener("change", () => {
+  const name = listEl.value;
+  const raw = localStorage.getItem("bean_" + name);
+  if (!raw) return;
+  const data = JSON.parse(raw);
+  beanNameEl.value = name;
+  finalEl.value = data.final;
+  beansEl.value = data.beans;
+});
+
+function calc() {
+  const total = Number(finalEl.value);
+  let beans = Number(beansEl.value);
+
+  if (!total) {
+    resultEl.textContent = "出来上がり量を入力してください。";
     return;
   }
 
-  /* 保存 */
-  beanData[name] = { final: total, beans: beans };
-  localStorage.setItem("beanData", JSON.stringify(beanData));
-  lastBean = name;
-  localStorage.setItem("lastBean", name);
+  // 豆量が空なら自動計算（1投目3倍固定 → 前半40% → 40% / 3）
+  if (!beans) {
+    beans = Math.round((total * 0.4 / 3) * 10) / 10;
+    beansEl.value = beans;
+  }
 
-  /* 4:6 固定 */
-  const front = total * 0.4;
-  const back = total * 0.6;
+  const ratio = 3.0; // 1投目は3倍固定
+  const first = beans * ratio;
 
-  /* 前半を蒸らし倍率で分割 */
-  let first = beans * bloomRatio;
-  if (first > front) first = front;
+  const front = Math.round(total * 0.4);
+  const back = total - front;
 
   const second = front - first;
 
-  /* 後半は 30% / 30% */
-  const third = total * 0.3;
-  const fourth = total * 0.3;
+  // 後半分割例
+  const b2 = Math.round(back / 2);
+  const b3 = Math.round(back / 3);
 
-  /* 累計 */
-  const c1 = Math.round(first);
-  const c2 = Math.round(first + second);
-  const c3 = Math.round(first + second + third);
-  const c4 = Math.round(total);
+  const c1_2 = first + second + b2;
+  const c1_3 = first + second + b3;
+  const c2_3 = first + second + b3 * 2;
 
-  const text =
-`【4:6メソッド】
+  let out = "";
 
-品種：${name}
-豆量：${beans} g
+  out += "【前半40%】\n";
+  out += ` 1投：${pad3(first)} g\n`;
+  out += ` 2投：${pad3(second)} g   （累計 ${pad3(front)} g）\n\n`;
 
-── 前半40%（フレーバー）──
-1投目：${pad3(Math.round(first))} g  （累計 ${pad3(c1)} g）
-2投目：${pad3(Math.round(second))} g  （累計 ${pad3(c2)} g）
+  out += "【後半60%】\n";
+  out += ` 合計：${back} g\n\n`;
 
-── 後半60%（濃度調整）──
-3投目：${pad3(Math.round(third))} g  （累計 ${pad3(c3)} g）
-4投目：${pad3(Math.round(fourth))} g  （累計 ${pad3(c4)} g）
+  out += "── 後半60%の分割例 ──\n\n";
 
-前半合計：${pad3(Math.round(front))} g
-後半合計：${pad3(Math.round(back))} g`;
+  out += "1回（薄め）\n";
+  out += ` 1投：${pad3(back)} g   （累計 ${pad3(total)} g）\n\n`;
 
+  out += "2回（軽め）\n";
+  out += ` 1投：${pad3(b2)} g   （累計 ${pad3(c1_2)} g）\n`;
+  out += ` 2投：${pad3(b2)} g   （累計 ${pad3(total)} g）\n\n`;
 
- document.getElementById("result").textContent = text;
+  out += "3回（濃いめ）\n";
+  out += ` 1投：${pad3(b3)} g   （累計 ${pad3(c1_3)} g）\n`;
+  out += ` 2投：${pad3(b3)} g   （累計 ${pad3(c2_3)} g）\n`;
+  out += ` 3投：${pad3(b3)} g   （累計 ${pad3(total)} g）\n\n`;
 
-setTimeout(() => {
-  document.getElementById("result").scrollIntoView({ behavior: "smooth" });
-}, 10);
+  out += "4:6 Method by Tetsu Kasuya\n";
 
+  resultEl.textContent = out;
+
+  saveBean();
 }
+
+loadList();
 </script>
 
 </body>
