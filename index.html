@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>mk46 v2.9.3</title>
+<title>mk46 v2.9.4</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -13,7 +13,7 @@ body {
 }
 
 /* 入力欄 */
-input, select {
+input {
   width: 100%;
   padding: 10px;
   margin: 6px 0 14px;
@@ -70,7 +70,7 @@ button:active {
   background: #6f3610;
 }
 
-/* 小ボタン（削除・クリア） */
+/* 小ボタン（削除・クリア・リスト） */
 .small-btns {
   display: flex;
   gap: 8px;
@@ -81,6 +81,7 @@ button:active {
   flex: 1;
 }
 
+/* 結果表示 */
 #result {
   white-space: pre-wrap;
   font-family: monospace;
@@ -90,18 +91,51 @@ button:active {
   margin-top: 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+/* モーダル（品種リスト） */
+#modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+#modalContent {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 80%;
+  max-width: 300px;
+}
+
+#modalContent div {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+#modalContent div:last-child {
+  border-bottom: none;
+}
+
+#modalContent div:hover {
+  background: #f0f0f0;
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
-<h2>mk46 v2.9.3</h2>
+<h2>mk46 v2.9.4</h2>
 
 <label>品種</label>
-<input id="beanName" list="beanList" placeholder="例：ケニア">
-<datalist id="beanList"></datalist>
+<input id="beanName" placeholder="例：ケニア">
 
 <div class="small-btns">
+  <button onclick="openList()">品種リスト</button>
   <button onclick="deleteBean()">削除</button>
   <button onclick="clearAll()">クリア</button>
 </div>
@@ -120,9 +154,14 @@ button:active {
   <button onclick="setRatio(3.0)">3.0</button>
 </div>
 
-<button class="calc-btn" onclick="calc()">計算する</button>
+<button class="calc-btn" onclick="calc()">4:6メソッド レシピ生成</button>
 
 <pre id="result"></pre>
+
+<!-- モーダル -->
+<div id="modal" onclick="closeList()">
+  <div id="modalContent" onclick="event.stopPropagation()"></div>
+</div>
 
 <script>
 let beanData = JSON.parse(localStorage.getItem("beanData") || "{}");
@@ -137,39 +176,20 @@ for (const k in beanData) {
 }
 localStorage.setItem("beanData", JSON.stringify(beanData));
 
-/* UI 初期化 */
-updateList();
-if (lastBean && beanData[lastBean]) {
-  loadBean(lastBean);
-}
+/* 初期ロード */
+if (lastBean && beanData[lastBean]) loadBean(lastBean);
 
-/* 蒸らし倍率選択 */
+/* 蒸らし倍率 */
 function setRatio(v) {
   bloomRatio = v;
   document.querySelectorAll(".ratio-buttons button").forEach(b => b.classList.remove("ratio-selected"));
   event.target.classList.add("ratio-selected");
 }
 
-/* 品種リスト更新 */
-function updateList() {
-  const dl = document.getElementById("beanList");
-  dl.innerHTML = "";
-  for (const k in beanData) {
-    const o = document.createElement("option");
-    o.value = k;
-    dl.appendChild(o);
-  }
-}
-
 /* 品種入力時 */
 document.getElementById("beanName").addEventListener("input", e => {
   const name = e.target.value;
-  if (beanData[name]) {
-    loadBean(name);
-  } else {
-    document.getElementById("final").value = "";
-    document.getElementById("beans").value = "";
-  }
+  if (beanData[name]) loadBean(name);
 });
 
 /* 品種読み込み */
@@ -203,9 +223,31 @@ function deleteBean() {
   if (beanData[name]) {
     delete beanData[name];
     localStorage.setItem("beanData", JSON.stringify(beanData));
-    updateList();
     clearAll();
   }
+}
+
+/* 品種リスト表示 */
+function openList() {
+  const modal = document.getElementById("modal");
+  const content = document.getElementById("modalContent");
+  content.innerHTML = "";
+
+  for (const k in beanData) {
+    const div = document.createElement("div");
+    div.textContent = k;
+    div.onclick = () => {
+      loadBean(k);
+      closeList();
+    };
+    content.appendChild(div);
+  }
+
+  modal.style.display = "flex";
+}
+
+function closeList() {
+  document.getElementById("modal").style.display = "none";
 }
 
 /* 計算本体 */
@@ -222,7 +264,6 @@ function calc() {
   /* 保存 */
   beanData[name] = { final: total, beans: beans };
   localStorage.setItem("beanData", JSON.stringify(beanData));
-  updateList();
   lastBean = name;
   localStorage.setItem("lastBean", name);
 
@@ -240,12 +281,22 @@ function calc() {
   const third = total * 0.3;
   const fourth = total * 0.3;
 
+  /* 累計 */
+  const c1 = Math.round(first);
+  const c2 = Math.round(first + second);
+  const c3 = Math.round(first + second + third);
+  const c4 = Math.round(total);
+
   const text =
-`【抽出レシピ】
-1投目：${Math.round(first)} g
-2投目：${Math.round(second)} g
-3投目：${Math.round(third)} g
-4投目：${Math.round(fourth)} g
+`【4:6メソッド】 ${name}：${beans} g
+
+── 前半40%（フレーバー）──
+1投目：${Math.round(first)} g   （累計 ${c1} g）
+2投目：${Math.round(second)} g  （累計 ${c2} g）
+
+── 後半60%（濃度調整）──
+3投目：${Math.round(third)} g   （累計 ${c3} g）
+4投目：${Math.round(fourth)} g  （累計 ${c4} g）
 
 前半合計：${Math.round(front)} g
 後半合計：${Math.round(back)} g`;
