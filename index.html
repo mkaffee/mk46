@@ -86,6 +86,7 @@ button:active {
   white-space: pre-wrap;
   font-family: monospace;
   font-size: 1.1rem;
+  line-height: 1.4;
   background: #fff;
   padding: 14px;
   border-radius: 10px;
@@ -293,7 +294,10 @@ function calc() {
   const c4 = Math.round(total);
 
   const text =
-`【4:6メソッド】 ${name}：${beans} g
+`【4:6メソッド】
+
+品種：${name}
+豆量：${beans} g
 
 ── 前半40%（フレーバー）──
 1投目：${pad3(Math.round(first))} g  （累計 ${pad3(c1)} g）
