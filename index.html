@@ -46,38 +46,102 @@ button:active {
   background: #fafafa;
   border-radius: 6px;
 }
+
+/* モーダル */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 14px;
+  border-radius: 8px;
+  min-width: 260px;
+  max-width: 320px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+}
+
+.modal-title {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.bean-item {
+  padding: 8px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.bean-item:hover {
+  background: #f0f0f0;
+}
+
+.modal-footer {
+  margin-top: 10px;
+  text-align: right;
+}
+
+.modal-footer button {
+  margin-right: 0;
+}
 </style>
 </head>
 <body>
 
 <h2>4:6 Method Brewer</h2>
 
-<!-- 品名 -->
+<!-- 豆の名前 -->
 <label>豆の名前</label>
 <input id="beanName" placeholder="例：ブラジル サントス">
 
 <div style="margin-top:6px;">
-  <button onclick="showBeanList()">豆リスト</button>
-  <button onclick="deleteBean()">削除</button>
+  <button onclick="openBeanModal('select')">豆リスト</button>
+  <button onclick="openBeanModal('delete')">削除</button>
   <button onclick="clearAll()">クリア</button>
 </div>
 
-<!-- 出来上がり量・豆量（横並び） -->
-<div style="margin-top:14px;">出来上がり量(g) と 豆量(g)</div>
-<div class="row">
-  <input id="final" type="number" placeholder="出来上がり(g)">
-  <input id="beans" type="number" placeholder="豆量(g)">
+<!-- 出来上がり量・豆量（横並び、ラベルは真上） -->
+<div class="row" style="margin-top:14px;">
+  <div style="flex:1;">
+    <label>出来上がり量(g)</label>
+    <input id="final" type="number" placeholder="出来上がり(g)">
+  </div>
+  <div style="flex:1;">
+    <label>豆量(g)</label>
+    <input id="beans" type="number" placeholder="豆量(g)">
+  </div>
 </div>
 
 <button style="margin-top:12px;" onclick="calc()">計算する</button>
 
 <pre id="result"></pre>
 
+<!-- モーダル -->
+<div id="beanModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title" id="beanModalTitle"></div>
+    <div id="beanModalList"></div>
+    <div class="modal-footer">
+      <button onclick="closeBeanModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const beanNameEl = document.getElementById("beanName");
 const finalEl = document.getElementById("final");
 const beansEl = document.getElementById("beans");
 const resultEl = document.getElementById("result");
+
+const beanModal = document.getElementById("beanModal");
+const beanModalTitle = document.getElementById("beanModalTitle");
+const beanModalList = document.getElementById("beanModalList");
 
 function pad3(n) {
   return String(n).padStart(3, " ");
@@ -87,40 +151,69 @@ function round1(x) {
   return Math.round(x * 10) / 10;
 }
 
+function calcBeans(total) {
+  return round1(total / 15);
+}
+
 /* -------------------------
-   豆リスト（prompt方式）
+   モーダル（豆リスト）
 ------------------------- */
-function showBeanList() {
+let beanModalMode = "select"; // 'select' or 'delete'
+
+function openBeanModal(mode) {
+  beanModalMode = mode;
+
   const keys = Object.keys(localStorage).filter(k => k.startsWith("bean_"));
-  if (keys.length === 0) {
-    alert("保存された豆はありません。");
-    return;
-  }
   const names = keys.map(k => k.substring(5));
-  const pick = prompt("豆を選んでください:\n" + names.join("\n"));
-  if (!pick) return;
 
-  const raw = localStorage.getItem("bean_" + pick);
+  beanModalList.innerHTML = "";
+
+  if (names.length === 0) {
+    beanModalTitle.textContent = "保存された豆はありません";
+  } else {
+    beanModalTitle.textContent = (mode === "select") ? "豆を選んでください" : "削除する豆を選んでください";
+
+    names.forEach(name => {
+      const div = document.createElement("div");
+      div.textContent = name;
+      div.className = "bean-item";
+      div.onclick = () => {
+        if (beanModalMode === "select") {
+          loadBean(name);
+        } else {
+          deleteBean(name);
+        }
+        closeBeanModal();
+      };
+      beanModalList.appendChild(div);
+    });
+  }
+
+  beanModal.style.display = "flex";
+}
+
+function closeBeanModal() {
+  beanModal.style.display = "none";
+}
+
+beanModal.addEventListener("click", (e) => {
+  if (e.target === beanModal) {
+    closeBeanModal();
+  }
+});
+
+function loadBean(name) {
+  const raw = localStorage.getItem("bean_" + name);
   if (!raw) return;
-
   const data = JSON.parse(raw);
-  beanNameEl.value = pick;
+  beanNameEl.value = name;
   finalEl.value = data.final;
   beansEl.value = data.beans;
 }
 
-function deleteBean() {
-  const keys = Object.keys(localStorage).filter(k => k.startsWith("bean_"));
-  if (keys.length === 0) {
-    alert("削除できる豆がありません。");
-    return;
-  }
-  const names = keys.map(k => k.substring(5));
-  const pick = prompt("削除する豆を選んでください:\n" + names.join("\n"));
-  if (!pick) return;
-
-  localStorage.removeItem("bean_" + pick);
-  alert("削除しました");
+function deleteBean(name) {
+  localStorage.removeItem("bean_" + name);
+  alert("削除しました: " + name);
 }
 
 function clearAll() {
@@ -136,9 +229,8 @@ finalEl.addEventListener("input", () => {
   const total = Number(finalEl.value);
   if (!total) return;
 
-  if (!beansEl.value) {
-    const beans = round1((total * 0.4) / 3);
-    beansEl.value = beans;
+  if (beansEl.value === "") {
+    beansEl.value = calcBeans(total);
   }
 });
 
@@ -155,7 +247,7 @@ function calc() {
   }
 
   if (!beans) {
-    beans = round1((total * 0.4) / 3);
+    beans = calcBeans(total);
     beansEl.value = beans;
   }
 
@@ -221,3 +313,4 @@ function saveBean() {
 
 </body>
 </html>
+
