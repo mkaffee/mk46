@@ -250,6 +250,10 @@ function closeList() {
   document.getElementById("modal").style.display = "none";
 }
 
+function pad3(n) {
+  return String(n).padStart(3, " ");
+}
+  
 /* 計算本体 */
 function calc() {
   const name = document.getElementById("beanName").value;
@@ -291,15 +295,16 @@ function calc() {
 `【4:6メソッド】 ${name}：${beans} g
 
 ── 前半40%（フレーバー）──
-1投目：${Math.round(first)} g   （累計 ${c1} g）
-2投目：${Math.round(second)} g  （累計 ${c2} g）
+1投目：${pad3(Math.round(first))} g  （累計 ${pad3(c1)} g）
+2投目：${pad3(Math.round(second))} g  （累計 ${pad3(c2)} g）
 
 ── 後半60%（濃度調整）──
-3投目：${Math.round(third)} g   （累計 ${c3} g）
-4投目：${Math.round(fourth)} g  （累計 ${c4} g）
+3投目：${pad3(Math.round(third))} g  （累計 ${pad3(c3)} g）
+4投目：${pad3(Math.round(fourth))} g  （累計 ${pad3(c4)} g）
 
-前半合計：${Math.round(front)} g
-後半合計：${Math.round(back)} g`;
+前半合計：${pad3(Math.round(front))} g
+後半合計：${pad3(Math.round(back))} g`;
+
 
  document.getElementById("result").textContent = text;
 
