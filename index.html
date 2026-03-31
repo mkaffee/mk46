@@ -2,57 +2,132 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>4:6 Method Brewer</title>
 <style>
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: monospace;
-  padding: 18px;
-  line-height: 1.7;
+  padding: 16px;
+  background: #f5f0eb;
+  color: #222;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin: 0 0 16px;
+  color: #5c3317;
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 4px;
 }
 
 input {
   width: 100%;
-  padding: 8px;
-  font-size: 16px;
+  padding: 12px;
+  font-size: 1.1rem;
   border: 1px solid #ccc;
-  border-radius: 6px;
-  box-sizing: border-box;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 12px;
+  -webkit-appearance: none;
 }
 
-button {
-  padding: 8px 14px;
-  font-size: 15px;
+input:focus {
+  outline: none;
+  border-color: #8B4513;
+}
+
+/* 小ボタン群 */
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.btn-row button {
+  flex: 1;
+  padding: 11px 0;
+  font-size: 0.95rem;
+  font-family: monospace;
   border: none;
-  border-radius: 6px;
-  background: #eee;
-  margin-right: 6px;
+  border-radius: 8px;
+  background: #e8e0d8;
+  color: #333;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-button:active {
-  background: #ddd;
+.btn-row button:active {
+  background: #d4c8bc;
 }
 
-.row {
+/* 出来上がり・豆量 横並び */
+.input-row {
   display: flex;
   gap: 10px;
-  margin-top: 6px;
 }
 
+.input-row > div {
+  flex: 1;
+}
+
+/* Brewボタン */
+#brewBtn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin-top: 14px;
+  font-size: 1.3rem;
+  font-family: monospace;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  background: #e8e0d8;
+  color: #5c3317;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#brewBtn.brewed {
+  background: #5c3317;
+  color: #f5f0eb;
+}
+
+#brewBtn:active {
+  opacity: 0.85;
+}
+
+/* 結果 */
 #result {
   white-space: pre;
   margin-top: 18px;
   padding: 14px;
-  border: 1px solid #ccc;
-  background: #fafafa;
-  border-radius: 6px;
+  border: 1px solid #d4c8bc;
+  background: #fff;
+  border-radius: 10px;
+  font-size: 1rem;
+  line-height: 1.7;
+  overflow-x: auto;
 }
 
-/* モーダル */
+/* モーダル：下から出るシート */
 .modal {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.4);
   justify-content: center;
   align-items: center;
   z-index: 1000;
@@ -60,35 +135,50 @@ button:active {
 
 .modal-content {
   background: #fff;
-  padding: 14px;
-  border-radius: 8px;
-  min-width: 260px;
-  max-width: 320px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  padding: 16px;
+  border-radius: 14px;
+  width: 88%;
+  max-width: 400px;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .modal-title {
-  font-size: 15px;
+  font-size: 0.85rem;
+  color: #888;
   margin-bottom: 8px;
 }
 
 .bean-item {
-  padding: 8px 6px;
-  border-radius: 4px;
+  padding: 13px 8px;
+  border-bottom: 1px solid #f0ebe6;
   cursor: pointer;
+  font-size: 1rem;
 }
 
-.bean-item:hover {
-  background: #f0f0f0;
+.bean-item:last-child {
+  border-bottom: none;
+}
+
+.bean-item:active {
+  background: #f5f0eb;
 }
 
 .modal-footer {
   margin-top: 10px;
-  text-align: right;
+  display: flex;
 }
 
 .modal-footer button {
-  margin-right: 0;
+  flex: 1;
+  padding: 13px;
+  font-size: 1rem;
+  font-family: monospace;
+  border: none;
+  border-radius: 8px;
+  background: #e8e0d8;
+  color: #333;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -96,29 +186,27 @@ button:active {
 
 <h2>4:6 Method Brewer</h2>
 
-<!-- 豆の名前 -->
 <label>豆の名前</label>
-<input id="beanName" placeholder="例：ブラジル サントス">
+<input id="beanName" placeholder="例：ブラジル サントス" autocomplete="off">
 
-<div style="margin-top:6px;">
+<div class="btn-row">
   <button onclick="openBeanModal('select')">豆リスト</button>
   <button onclick="openBeanModal('delete')">削除</button>
   <button onclick="clearAll()">クリア</button>
 </div>
 
-<!-- 出来上がり量・豆量（横並び、ラベルは真上） -->
-<div class="row" style="margin-top:14px;">
-  <div style="flex:1;">
-    <label>出来上がり量(g)</label>
-    <input id="final" type="number" placeholder="出来上がり(g)">
+<div class="input-row">
+  <div>
+    <label>出来上がり量 (g)</label>
+    <input id="final" type="number" placeholder="例：500">
   </div>
-  <div style="flex:1;">
-    <label>豆量(g)</label>
-    <input id="beans" type="number" placeholder="豆量(g)">
+  <div>
+    <label>豆量 (g)</label>
+    <input id="beans" type="number" placeholder="自動計算">
   </div>
 </div>
 
-<button style="margin-top:12px;" onclick="calc()">計算する</button>
+<button id="brewBtn" onclick="calc()">Brew</button>
 
 <pre id="result"></pre>
 
@@ -134,36 +222,35 @@ button:active {
 </div>
 
 <script>
-const beanNameEl = document.getElementById("beanName");
-const finalEl = document.getElementById("final");
-const beansEl = document.getElementById("beans");
-const resultEl = document.getElementById("result");
-
-const beanModal = document.getElementById("beanModal");
+const beanNameEl     = document.getElementById("beanName");
+const finalEl        = document.getElementById("final");
+const beansEl        = document.getElementById("beans");
+const resultEl       = document.getElementById("result");
+const brewBtn        = document.getElementById("brewBtn");
+const beanModal      = document.getElementById("beanModal");
 const beanModalTitle = document.getElementById("beanModalTitle");
-const beanModalList = document.getElementById("beanModalList");
+const beanModalList  = document.getElementById("beanModalList");
 
 function pad3(n) {
   return String(n).padStart(3, " ");
 }
 
-function round1(x) {
-  return Math.round(x * 10) / 10;
-}
-
-function calcBeans(total) {
-  return round1(total / 15);
+/* -------------------------
+   Brewボタン 色変化
+------------------------- */
+function setBrewed(on) {
+  brewBtn.classList.toggle("brewed", on);
 }
 
 /* -------------------------
    モーダル（豆リスト）
 ------------------------- */
-let beanModalMode = "select"; // 'select' or 'delete'
+let beanModalMode = "select";
 
 function openBeanModal(mode) {
   beanModalMode = mode;
 
-  const keys = Object.keys(localStorage).filter(k => k.startsWith("bean_"));
+  const keys  = Object.keys(localStorage).filter(k => k.startsWith("bean_"));
   const names = keys.map(k => k.substring(5));
 
   beanModalList.innerHTML = "";
@@ -197,9 +284,7 @@ function closeBeanModal() {
 }
 
 beanModal.addEventListener("click", (e) => {
-  if (e.target === beanModal) {
-    closeBeanModal();
-  }
+  if (e.target === beanModal) closeBeanModal();
 });
 
 function loadBean(name) {
@@ -207,8 +292,9 @@ function loadBean(name) {
   if (!raw) return;
   const data = JSON.parse(raw);
   beanNameEl.value = name;
-  finalEl.value = data.final;
-  beansEl.value = data.beans;
+  finalEl.value    = data.final;
+  beansEl.value    = data.beans;
+  setBrewed(false);
 }
 
 function deleteBean(name) {
@@ -217,9 +303,11 @@ function deleteBean(name) {
 }
 
 function clearAll() {
-  beanNameEl.value = "";
-  finalEl.value = "";
-  beansEl.value = "";
+  beanNameEl.value     = "";
+  finalEl.value        = "";
+  beansEl.value        = "";
+  resultEl.textContent = "";
+  setBrewed(false);
 }
 
 /* -------------------------
@@ -228,10 +316,8 @@ function clearAll() {
 finalEl.addEventListener("input", () => {
   const total = Number(finalEl.value);
   if (!total) return;
-
-  if (beansEl.value === "") {
-    beansEl.value = calcBeans(total);
-  }
+  beansEl.value = Math.floor(total / 15);
+  setBrewed(false);
 });
 
 /* -------------------------
@@ -239,7 +325,7 @@ finalEl.addEventListener("input", () => {
 ------------------------- */
 function calc() {
   const total = Number(finalEl.value);
-  let beans = Number(beansEl.value);
+  let beans   = Number(beansEl.value);
 
   if (!total) {
     resultEl.textContent = "出来上がり量を入力してください。";
@@ -247,35 +333,32 @@ function calc() {
   }
 
   if (!beans) {
-    beans = calcBeans(total);
+    beans = Math.floor(total / 15);
     beansEl.value = beans;
   }
 
-  const ratio = 3.0;
-  const first = round1(beans * ratio);
+  const first  = beans * 3;
+  const front  = Math.round(total * 0.4);
+  const second = front - first;
+  const back   = total - front;
 
-  const front = round1(total * 0.4);
-  const second = round1(front - first);
+  const b2 = Math.round(back / 2);
+  const b3 = Math.round(back / 3);
 
-  const back = round1(total - front);
+  const c1_2 = first + second + b2;
+  const c1_3 = first + second + b3;
+  const c2_3 = first + second + b3 * 2;
 
-  const b2 = round1(back / 2);
-  const b3 = round1(back / 3);
-
-  const c1_2 = round1(first + second + b2);
-  const c1_3 = round1(first + second + b3);
-  const c2_3 = round1(first + second + b3 * 2);
+  const name = beanNameEl.value.trim();
 
   let out = "";
+  if (name) out += `${name}　${beans} g\n\n`;
 
   out += "【前半40%】\n";
   out += ` 1投：${pad3(first)} g\n`;
   out += ` 2投：${pad3(second)} g   （累計 ${pad3(front)} g）\n\n`;
 
-  out += "【後半60%】\n";
-  out += ` 合計：${back} g\n\n`;
-
-  out += "── 後半60%の分割例 ──\n\n";
+  out += "── 後半60%（分割例）──\n\n";
 
   out += "1回（薄め）\n";
   out += ` 1投：${pad3(back)} g   （累計 ${pad3(total)} g）\n\n`;
@@ -292,6 +375,9 @@ function calc() {
   out += "4:6 Method by Tetsu Kasuya\n";
 
   resultEl.textContent = out;
+  setBrewed(true);
+
+  resultEl.scrollIntoView({ behavior: "smooth" });
 
   saveBean();
 }
@@ -302,7 +388,6 @@ function calc() {
 function saveBean() {
   const name = beanNameEl.value.trim();
   if (!name) return;
-
   const data = {
     final: finalEl.value,
     beans: beansEl.value
