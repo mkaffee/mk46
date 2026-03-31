@@ -6,47 +6,45 @@
 <style>
 body {
   font-family: monospace;
-  padding: 16px;
-  line-height: 1.6;
+  padding: 18px;
+  line-height: 1.7;
 }
 
 input {
   width: 100%;
-  padding: 6px;
+  padding: 8px;
   font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
   box-sizing: border-box;
+}
+
+button {
+  padding: 8px 14px;
+  font-size: 15px;
+  border: none;
+  border-radius: 6px;
+  background: #eee;
+  margin-right: 6px;
+}
+
+button:active {
+  background: #ddd;
 }
 
 .row {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.row input {
-  flex: 1;
-}
-
-button {
-  padding: 8px 12px;
-  margin-top: 8px;
-  font-size: 16px;
+  gap: 10px;
+  margin-top: 6px;
 }
 
 #result {
   white-space: pre;
-  margin-top: 16px;
-  padding: 12px;
+  margin-top: 18px;
+  padding: 14px;
   border: 1px solid #ccc;
   background: #fafafa;
-}
-
-.listBox {
-  margin-top: 6px;
-}
-
-.listBox button {
-  margin-left: 6px;
+  border-radius: 6px;
 }
 </style>
 </head>
@@ -54,22 +52,24 @@ button {
 
 <h2>4:6 Method Brewer</h2>
 
-<!-- 品種 -->
-<label>品種</label>
-<input id="beanName" placeholder="例：エチオピア ナチュラル">
-<div class="listBox">
-  <select id="beanList"></select>
+<!-- 品名 -->
+<label>豆の名前</label>
+<input id="beanName" placeholder="例：ブラジル サントス">
+
+<div style="margin-top:6px;">
+  <button onclick="showBeanList()">豆リスト</button>
   <button onclick="deleteBean()">削除</button>
   <button onclick="clearAll()">クリア</button>
 </div>
 
 <!-- 出来上がり量・豆量（横並び） -->
+<div style="margin-top:14px;">出来上がり量(g) と 豆量(g)</div>
 <div class="row">
   <input id="final" type="number" placeholder="出来上がり(g)">
   <input id="beans" type="number" placeholder="豆量(g)">
 </div>
 
-<button onclick="calc()">計算する</button>
+<button style="margin-top:12px;" onclick="calc()">計算する</button>
 
 <pre id="result"></pre>
 
@@ -77,42 +77,50 @@ button {
 const beanNameEl = document.getElementById("beanName");
 const finalEl = document.getElementById("final");
 const beansEl = document.getElementById("beans");
-const listEl = document.getElementById("beanList");
 const resultEl = document.getElementById("result");
 
 function pad3(n) {
   return String(n).padStart(3, " ");
 }
 
-function saveBean() {
-  const name = beanNameEl.value.trim();
-  if (!name) return;
-  const data = {
-    final: finalEl.value,
-    beans: beansEl.value
-  };
-  localStorage.setItem("bean_" + name, JSON.stringify(data));
-  loadList();
+function round1(x) {
+  return Math.round(x * 10) / 10;
 }
 
-function loadList() {
-  listEl.innerHTML = "";
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k.startsWith("bean_")) {
-      const opt = document.createElement("option");
-      opt.value = k.substring(5);
-      opt.textContent = k.substring(5);
-      listEl.appendChild(opt);
-    }
+/* -------------------------
+   豆リスト（prompt方式）
+------------------------- */
+function showBeanList() {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith("bean_"));
+  if (keys.length === 0) {
+    alert("保存された豆はありません。");
+    return;
   }
+  const names = keys.map(k => k.substring(5));
+  const pick = prompt("豆を選んでください:\n" + names.join("\n"));
+  if (!pick) return;
+
+  const raw = localStorage.getItem("bean_" + pick);
+  if (!raw) return;
+
+  const data = JSON.parse(raw);
+  beanNameEl.value = pick;
+  finalEl.value = data.final;
+  beansEl.value = data.beans;
 }
 
 function deleteBean() {
-  const name = listEl.value;
-  if (!name) return;
-  localStorage.removeItem("bean_" + name);
-  loadList();
+  const keys = Object.keys(localStorage).filter(k => k.startsWith("bean_"));
+  if (keys.length === 0) {
+    alert("削除できる豆がありません。");
+    return;
+  }
+  const names = keys.map(k => k.substring(5));
+  const pick = prompt("削除する豆を選んでください:\n" + names.join("\n"));
+  if (!pick) return;
+
+  localStorage.removeItem("bean_" + pick);
+  alert("削除しました");
 }
 
 function clearAll() {
@@ -121,16 +129,22 @@ function clearAll() {
   beansEl.value = "";
 }
 
-listEl.addEventListener("change", () => {
-  const name = listEl.value;
-  const raw = localStorage.getItem("bean_" + name);
-  if (!raw) return;
-  const data = JSON.parse(raw);
-  beanNameEl.value = name;
-  finalEl.value = data.final;
-  beansEl.value = data.beans;
+/* -------------------------
+   出来上がり量 → 豆量 自動計算
+------------------------- */
+finalEl.addEventListener("input", () => {
+  const total = Number(finalEl.value);
+  if (!total) return;
+
+  if (!beansEl.value) {
+    const beans = round1((total * 0.4) / 3);
+    beansEl.value = beans;
+  }
 });
 
+/* -------------------------
+   計算本体
+------------------------- */
 function calc() {
   const total = Number(finalEl.value);
   let beans = Number(beansEl.value);
@@ -140,27 +154,25 @@ function calc() {
     return;
   }
 
-  // 豆量が空なら自動計算（1投目3倍固定 → 前半40% → 40% / 3）
   if (!beans) {
-    beans = Math.round((total * 0.4 / 3) * 10) / 10;
+    beans = round1((total * 0.4) / 3);
     beansEl.value = beans;
   }
 
-  const ratio = 3.0; // 1投目は3倍固定
-  const first = beans * ratio;
+  const ratio = 3.0;
+  const first = round1(beans * ratio);
 
-  const front = Math.round(total * 0.4);
-  const back = total - front;
+  const front = round1(total * 0.4);
+  const second = round1(front - first);
 
-  const second = front - first;
+  const back = round1(total - front);
 
-  // 後半分割例
-  const b2 = Math.round(back / 2);
-  const b3 = Math.round(back / 3);
+  const b2 = round1(back / 2);
+  const b3 = round1(back / 3);
 
-  const c1_2 = first + second + b2;
-  const c1_3 = first + second + b3;
-  const c2_3 = first + second + b3 * 2;
+  const c1_2 = round1(first + second + b2);
+  const c1_3 = round1(first + second + b3);
+  const c2_3 = round1(first + second + b3 * 2);
 
   let out = "";
 
@@ -192,7 +204,19 @@ function calc() {
   saveBean();
 }
 
-loadList();
+/* -------------------------
+   保存
+------------------------- */
+function saveBean() {
+  const name = beanNameEl.value.trim();
+  if (!name) return;
+
+  const data = {
+    final: finalEl.value,
+    beans: beansEl.value
+  };
+  localStorage.setItem("bean_" + name, JSON.stringify(data));
+}
 </script>
 
 </body>
