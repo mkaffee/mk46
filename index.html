@@ -71,10 +71,10 @@ input:focus {
   background: #d4c8bc;
 }
 
-/* 出来上がり・豆量 横並び */
+/* 3列入力 */
 .input-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .input-row > div {
@@ -122,7 +122,7 @@ input:focus {
   overflow-x: auto;
 }
 
-/* モーダル：下から出るシート */
+/* モーダル */
 .modal {
   display: none;
   position: fixed;
@@ -197,12 +197,16 @@ input:focus {
 
 <div class="input-row">
   <div>
-    <label>出来上がり量 (g)</label>
+    <label>湯量(g)</label>
     <input id="final" type="number" placeholder="例：500">
   </div>
   <div>
-    <label>豆量 (g)</label>
+    <label>豆量(g)</label>
     <input id="beans" type="number" placeholder="自動計算">
+  </div>
+  <div>
+    <label>挽目</label>
+    <input id="grind" type="text" placeholder="例：3.5">
   </div>
 </div>
 
@@ -225,6 +229,7 @@ input:focus {
 const beanNameEl     = document.getElementById("beanName");
 const finalEl        = document.getElementById("final");
 const beansEl        = document.getElementById("beans");
+const grindEl        = document.getElementById("grind");
 const resultEl       = document.getElementById("result");
 const brewBtn        = document.getElementById("brewBtn");
 const beanModal      = document.getElementById("beanModal");
@@ -241,6 +246,14 @@ function pad3(n) {
 function setBrewed(on) {
   brewBtn.classList.toggle("brewed", on);
 }
+
+/* -------------------------
+   起動時：lastBean 自動ロード
+------------------------- */
+window.addEventListener("DOMContentLoaded", () => {
+  const lastBean = localStorage.getItem("lastBean");
+  if (lastBean) loadBean(lastBean);
+});
 
 /* -------------------------
    モーダル（豆リスト）
@@ -294,11 +307,14 @@ function loadBean(name) {
   beanNameEl.value = name;
   finalEl.value    = data.final;
   beansEl.value    = data.beans;
+  grindEl.value    = data.grind || "";
   setBrewed(false);
 }
 
 function deleteBean(name) {
   localStorage.removeItem("bean_" + name);
+  const lastBean = localStorage.getItem("lastBean");
+  if (lastBean === name) localStorage.removeItem("lastBean");
   alert("削除しました: " + name);
 }
 
@@ -306,12 +322,13 @@ function clearAll() {
   beanNameEl.value     = "";
   finalEl.value        = "";
   beansEl.value        = "";
+  grindEl.value        = "";
   resultEl.textContent = "";
   setBrewed(false);
 }
 
 /* -------------------------
-   出来上がり量 → 豆量 自動計算
+   湯量 → 豆量 自動計算
 ------------------------- */
 finalEl.addEventListener("input", () => {
   const total = Number(finalEl.value);
@@ -328,7 +345,7 @@ function calc() {
   let beans   = Number(beansEl.value);
 
   if (!total) {
-    resultEl.textContent = "出来上がり量を入力してください。";
+    resultEl.textContent = "湯量を入力してください。";
     return;
   }
 
@@ -349,10 +366,13 @@ function calc() {
   const c1_3 = first + second + b3;
   const c2_3 = first + second + b3 * 2;
 
-  const name = beanNameEl.value.trim();
+  const name  = beanNameEl.value.trim();
+  const grind = grindEl.value.trim();
 
   let out = "";
-  if (name) out += `${name}　${beans} g\n\n`;
+  if (name) out += `${name}　${beans} g\n`;
+  if (grind) out += `挽目：${grind}\n`;
+  if (name || grind) out += "\n";
 
   out += "【前半40%】\n";
   out += ` 1投：${pad3(first)} g\n`;
@@ -390,9 +410,11 @@ function saveBean() {
   if (!name) return;
   const data = {
     final: finalEl.value,
-    beans: beansEl.value
+    beans: beansEl.value,
+    grind: grindEl.value.trim()
   };
   localStorage.setItem("bean_" + name, JSON.stringify(data));
+  localStorage.setItem("lastBean", name);
 }
 </script>
 
