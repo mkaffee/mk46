@@ -206,13 +206,13 @@ input:focus {
   </div>
   <div>
     <label>挽目</label>
-    <input id="grind" type="number" placeholder="例：3.5">
+    <input id="grind" type="number" step="0.1" placeholder="例：3.5">
   </div>
 </div>
 
 <button id="brewBtn" onclick="calc()">Brew</button>
 
-<pre id="result"></pre>
+<div id="result"></div>
 
 <!-- モーダル -->
 <div id="beanModal" class="modal">
@@ -369,32 +369,37 @@ function calc() {
   const name  = beanNameEl.value.trim();
   const grind = grindEl.value.trim();
 
-  let out = "";
-  if (name) out += `${name}　${beans} g\n`;
-  if (grind) out += `挽目：${grind}\n`;
-  if (name || grind) out += "\n";
+  let lines = [];
 
-  out += "【前半40%】\n";
-  out += ` 1投：${pad3(first)} g\n`;
-  out += ` 2投：${pad3(second)} g   （累計 ${pad3(front)} g）\n\n`;
+  if (name) lines.push(`<strong>${name}　${beans} g</strong>`);
+  if (grind) lines.push(`挽目：${grind}`);
+  if (name || grind) lines.push("");
 
-  out += "── 後半60%（分割例）──\n\n";
+  lines.push(`<strong>【前半40%】</strong>`);
+  lines.push(`<strong> 1投：${pad3(first)} g</strong>`);
+  lines.push(`<strong> 2投：${pad3(second)} g   （累計 ${pad3(front)} g）</strong>`);
+  lines.push("");
 
-  out += "1回（薄め）\n";
-  out += ` 1投：${pad3(back)} g   （累計 ${pad3(total)} g）\n\n`;
+  lines.push(`<strong>── 後半60%（メイン）──</strong>`);
+  lines.push(`<strong>2回（軽め）</strong>`);
+  lines.push(`<strong> 1投：${pad3(b2)} g   （累計 ${pad3(c1_2)} g）</strong>`);
+  lines.push(`<strong> 2投：${pad3(b2)} g   （累計 ${pad3(total)} g）</strong>`);
+  lines.push("");
 
-  out += "2回（軽め）\n";
-  out += ` 1投：${pad3(b2)} g   （累計 ${pad3(c1_2)} g）\n`;
-  out += ` 2投：${pad3(b2)} g   （累計 ${pad3(total)} g）\n\n`;
+  lines.push("── その他の抽出パターン ──");
+  lines.push("1回（薄め）");
+  lines.push(` 1投：${pad3(back)} g   （累計 ${pad3(total)} g）`);
+  lines.push("");
 
-  out += "3回（濃いめ）\n";
-  out += ` 1投：${pad3(b3)} g   （累計 ${pad3(c1_3)} g）\n`;
-  out += ` 2投：${pad3(b3)} g   （累計 ${pad3(c2_3)} g）\n`;
-  out += ` 3投：${pad3(b3)} g   （累計 ${pad3(total)} g）\n\n`;
+  lines.push("3回（濃いめ）");
+  lines.push(` 1投：${pad3(b3)} g   （累計 ${pad3(c1_3)} g）`);
+  lines.push(` 2投：${pad3(b3)} g   （累計 ${pad3(c2_3)} g）`);
+  lines.push(` 3投：${pad3(b3)} g   （累計 ${pad3(total)} g）`);
+  lines.push("");
 
-  out += "4:6 Method by Tetsu Kasuya\n";
+  lines.push("4:6 Method by Tetsu Kasuya");
 
-  resultEl.textContent = out;
+  resultEl.innerHTML = lines.join("\n");
   setBrewed(true);
 
   resultEl.scrollIntoView({ behavior: "smooth" });
