@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>4:6 Method Brewer</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; }
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 body {
   font-family: monospace;
@@ -65,37 +67,48 @@ input:focus {
   -webkit-tap-highlight-color: transparent;
 }
 
-.btn-row button:active { background: #d4c8bc; }
+.btn-row button:active {
+  background: #d4c8bc;
+}
 
 /* 3列入力 */
 .input-row {
   display: flex;
   gap: 8px;
 }
-.input-row > div { flex: 1; }
 
-/* 蒸らし倍率ボタン */
-.ratio-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-  margin-bottom: 10px;
+.input-row > div {
+  flex: 1;
 }
 
-.ratio-row button {
+/* 蒸らし倍率ボタン */
+.bloom-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bloom-row button {
   flex: 1;
-  padding: 10px 0;
-  font-size: 1rem;
+  padding: 11px 0;
+  font-size: 0.95rem;
+  font-family: monospace;
   border: none;
   border-radius: 8px;
   background: #e8e0d8;
   color: #333;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, color 0.2s;
 }
 
-.ratio-row button.active {
+.bloom-row button.selected {
   background: #5c3317;
   color: #f5f0eb;
+}
+
+.bloom-row button:active {
+  opacity: 0.85;
 }
 
 /* Brewボタン */
@@ -103,7 +116,7 @@ input:focus {
   display: block;
   width: 100%;
   padding: 16px;
-  margin-top: 6px;
+  margin-top: 14px;
   font-size: 1.3rem;
   font-family: monospace;
   font-weight: bold;
@@ -122,7 +135,9 @@ input:focus {
   color: #f5f0eb;
 }
 
-#brewBtn:active { opacity: 0.85; }
+#brewBtn:active {
+  opacity: 0.85;
+}
 
 /* 結果 */
 #result {
@@ -171,8 +186,13 @@ input:focus {
   font-size: 1rem;
 }
 
-.bean-item:last-child { border-bottom: none; }
-.bean-item:active { background: #f5f0eb; }
+.bean-item:last-child {
+  border-bottom: none;
+}
+
+.bean-item:active {
+  background: #f5f0eb;
+}
 
 .modal-footer {
   margin-top: 10px;
@@ -216,20 +236,20 @@ input:focus {
   </div>
   <div>
     <label>挽目</label>
-    <input id="grind" type="text" placeholder="例：3.5">
+    <input id="grind" type="number" step="0.1" placeholder="例：3.5">
   </div>
 </div>
 
-<!-- 蒸らし倍率 -->
-<div class="ratio-row">
-  <button id="r20" onclick="setRatio(2.0)">2.0</button>
-  <button id="r25" onclick="setRatio(2.5)">2.5</button>
-  <button id="r30" class="active" onclick="setRatio(3.0)">3.0</button>
+<label style="margin-top:10px;">蒸らし倍率</label>
+<div class="bloom-row">
+  <button id="bloom2"   onclick="setBloom(2,   this)">× 2</button>
+  <button id="bloom2_5" onclick="setBloom(2.5, this)">× 2.5</button>
+  <button id="bloom3"   onclick="setBloom(3,   this)" class="selected">× 3</button>
 </div>
 
 <button id="brewBtn" onclick="calc()">Brew</button>
 
-<pre id="result"></pre>
+<div id="result"></div>
 
 <!-- モーダル -->
 <div id="beanModal" class="modal">
@@ -243,40 +263,52 @@ input:focus {
 </div>
 
 <script>
-let ratio = 3.0;
-
-function setRatio(r) {
-  ratio = r;
-  document.querySelectorAll(".ratio-row button").forEach(btn => btn.classList.remove("active"));
-  if (r === 2.0) r20.classList.add("active");
-  if (r === 2.5) r25.classList.add("active");
-  if (r === 3.0) r30.classList.add("active");
-  setBrewed(false);
-}
-
-const beanNameEl = document.getElementById("beanName");
-const finalEl    = document.getElementById("final");
-const beansEl    = document.getElementById("beans");
-const grindEl    = document.getElementById("grind");
-const resultEl   = document.getElementById("result");
-const brewBtn    = document.getElementById("brewBtn");
-const beanModal  = document.getElementById("beanModal");
+const beanNameEl     = document.getElementById("beanName");
+const finalEl        = document.getElementById("final");
+const beansEl        = document.getElementById("beans");
+const grindEl        = document.getElementById("grind");
+const resultEl       = document.getElementById("result");
+const brewBtn        = document.getElementById("brewBtn");
+const beanModal      = document.getElementById("beanModal");
 const beanModalTitle = document.getElementById("beanModalTitle");
 const beanModalList  = document.getElementById("beanModalList");
 
-function pad3(n) { return String(n).padStart(3, " "); }
+let bloomRatio = 3;
 
-function setBrewed(on) { brewBtn.classList.toggle("brewed", on); }
+function setBloom(v, btn) {
+  bloomRatio = v;
+  document.querySelectorAll(".bloom-row button").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  setBrewed(false);
+}
 
+function pad3(n) {
+  return String(n).padStart(3, " ");
+}
+
+/* -------------------------
+   Brewボタン 色変化
+------------------------- */
+function setBrewed(on) {
+  brewBtn.classList.toggle("brewed", on);
+}
+
+/* -------------------------
+   起動時：lastBean 自動ロード
+------------------------- */
 window.addEventListener("DOMContentLoaded", () => {
   const lastBean = localStorage.getItem("lastBean");
   if (lastBean) loadBean(lastBean);
 });
 
+/* -------------------------
+   モーダル（豆リスト）
+------------------------- */
 let beanModalMode = "select";
 
 function openBeanModal(mode) {
   beanModalMode = mode;
+
   const keys  = Object.keys(localStorage).filter(k => k.startsWith("bean_"));
   const names = keys.map(k => k.substring(5));
 
@@ -292,8 +324,11 @@ function openBeanModal(mode) {
       div.textContent = name;
       div.className = "bean-item";
       div.onclick = () => {
-        if (beanModalMode === "select") loadBean(name);
-        else deleteBean(name);
+        if (beanModalMode === "select") {
+          loadBean(name);
+        } else {
+          deleteBean(name);
+        }
         closeBeanModal();
       };
       beanModalList.appendChild(div);
@@ -303,7 +338,9 @@ function openBeanModal(mode) {
   beanModal.style.display = "flex";
 }
 
-function closeBeanModal() { beanModal.style.display = "none"; }
+function closeBeanModal() {
+  beanModal.style.display = "none";
+}
 
 beanModal.addEventListener("click", (e) => {
   if (e.target === beanModal) closeBeanModal();
@@ -328,14 +365,17 @@ function deleteBean(name) {
 }
 
 function clearAll() {
-  beanNameEl.value = "";
-  finalEl.value    = "";
-  beansEl.value    = "";
-  grindEl.value    = "";
+  beanNameEl.value     = "";
+  finalEl.value        = "";
+  beansEl.value        = "";
+  grindEl.value        = "";
   resultEl.textContent = "";
   setBrewed(false);
 }
 
+/* -------------------------
+   湯量 → 豆量 自動計算
+------------------------- */
 finalEl.addEventListener("input", () => {
   const total = Number(finalEl.value);
   if (!total) return;
@@ -343,6 +383,9 @@ finalEl.addEventListener("input", () => {
   setBrewed(false);
 });
 
+/* -------------------------
+   計算本体
+------------------------- */
 function calc() {
   const total = Number(finalEl.value);
   let beans   = Number(beansEl.value);
@@ -357,7 +400,7 @@ function calc() {
     beansEl.value = beans;
   }
 
-  const first  = Math.round(beans * ratio);
+  const first  = Math.round(beans * bloomRatio);
   const front  = Math.round(total * 0.4);
   const second = front - first;
   const back   = total - front;
@@ -372,32 +415,37 @@ function calc() {
   const name  = beanNameEl.value.trim();
   const grind = grindEl.value.trim();
 
-  let out = "";
-  if (name) out += `${name}　${beans} g\n`;
-  if (grind) out += `挽目：${grind}\n`;
-  if (name || grind) out += "\n";
+  let lines = [];
 
-  out += `【前半40%（蒸らし倍率 ${ratio} 倍）】\n`;
-  out += ` 1投：${pad3(first)} g\n`;
-  out += ` 2投：${pad3(second)} g   （累計 ${pad3(front)} g）\n\n`;
+  if (name) lines.push(`<strong>${name}　${beans} g</strong>`);
+  if (grind) lines.push(`挽目：${grind}`);
+  if (name || grind) lines.push("");
 
-  out += "── 後半60%（分割例）──\n\n";
+  lines.push(`<strong>【前半40%】</strong>`);
+  lines.push(`<strong> 1投：${pad3(first)} g</strong>`);
+  lines.push(`<strong> 2投：${pad3(second)} g   （累計 ${pad3(front)} g）</strong>`);
+  lines.push("");
 
-  out += "2回（軽め）\n";
-  out += ` 1投：${pad3(b2)} g   （累計 ${pad3(c1_2)} g）\n`;
-  out += ` 2投：${pad3(b2)} g   （累計 ${pad3(total)} g）\n\n`;
+  lines.push(`<strong>── 後半60%（メイン）──</strong>`);
+  lines.push(`<strong>2回（軽め）</strong>`);
+  lines.push(`<strong> 1投：${pad3(b2)} g   （累計 ${pad3(c1_2)} g）</strong>`);
+  lines.push(`<strong> 2投：${pad3(b2)} g   （累計 ${pad3(total)} g）</strong>`);
+  lines.push("");
 
-  out += "1回（薄め）\n";
-  out += ` 1投：${pad3(back)} g   （累計 ${pad3(total)} g）\n\n`;
+  lines.push("── その他の分割例 ──");
+  lines.push("1回（薄め）");
+  lines.push(` 1投：${pad3(back)} g   （累計 ${pad3(total)} g）`);
+  lines.push("");
 
-  out += "3回（濃いめ）\n";
-  out += ` 1投：${pad3(b3)} g   （累計 ${pad3(c1_3)} g）\n`;
-  out += ` 2投：${pad3(b3)} g   （累計 ${pad3(c2_3)} g）\n`;
-  out += ` 3投：${pad3(b3)} g   （累計 ${pad3(total)} g）\n\n`;
+  lines.push("3回（濃いめ）");
+  lines.push(` 1投：${pad3(b3)} g   （累計 ${pad3(c1_3)} g）`);
+  lines.push(` 2投：${pad3(b3)} g   （累計 ${pad3(c2_3)} g）`);
+  lines.push(` 3投：${pad3(b3)} g   （累計 ${pad3(total)} g）`);
+  lines.push("");
 
-  out += "4:6 Method by Tetsu Kasuya\n";
+  lines.push("4:6 Method by Tetsu Kasuya");
 
-  resultEl.textContent = out;
+  resultEl.innerHTML = lines.join("\n");
   setBrewed(true);
 
   resultEl.scrollIntoView({ behavior: "smooth" });
@@ -405,6 +453,9 @@ function calc() {
   saveBean();
 }
 
+/* -------------------------
+   保存
+------------------------- */
 function saveBean() {
   const name = beanNameEl.value.trim();
   if (!name) return;
