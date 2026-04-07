@@ -81,7 +81,7 @@ input:focus {
   flex: 1;
 }
 
-/* 蒸らし倍率ボタン */
+/* 蒸らし倍率ボタン・後半分割ボタン共通 */
 .bloom-row {
   display: flex;
   gap: 8px;
@@ -247,6 +247,13 @@ input:focus {
   <button id="bloom3"   onclick="setBloom(3,   this)" class="selected">× 3</button>
 </div>
 
+<label style="margin-top:10px;">後半分割</label>
+<div class="bloom-row">
+  <button onclick="setSplit(1, this)">1回</button>
+  <button onclick="setSplit(2, this)" class="selected">2回</button>
+  <button onclick="setSplit(3, this)">3回</button>
+</div>
+
 <button id="brewBtn" onclick="calc()">Brew</button>
 
 <div id="result"></div>
@@ -274,10 +281,18 @@ const beanModalTitle = document.getElementById("beanModalTitle");
 const beanModalList  = document.getElementById("beanModalList");
 
 let bloomRatio = 3;
+let splitCount = 2;
 
 function setBloom(v, btn) {
   bloomRatio = v;
-  document.querySelectorAll(".bloom-row button").forEach(b => b.classList.remove("selected"));
+  document.querySelectorAll(".bloom-row").item(0).querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  setBrewed(false);
+}
+
+function setSplit(v, btn) {
+  splitCount = v;
+  document.querySelectorAll(".bloom-row").item(1).querySelectorAll("button").forEach(b => b.classList.remove("selected"));
   btn.classList.add("selected");
   setBrewed(false);
 }
@@ -421,26 +436,23 @@ function calc() {
   if (grind) lines.push(`挽目：${grind}`);
   if (name || grind) lines.push("");
 
-  lines.push(`<strong>【前半40%】</strong>`);
+  lines.push(`<strong>── 前半40%──</strong>`);
   lines.push(`<strong> 1投：${pad3(first)} g</strong>`);
   lines.push(`<strong> 2投：${pad3(second)} g   （累計 ${pad3(front)} g）</strong>`);
   lines.push("");
 
-  lines.push(`<strong>── 後半60%（メイン）──</strong>`);
-  lines.push(`<strong>2回（軽め）</strong>`);
-  lines.push(`<strong> 1投：${pad3(b2)} g   （累計 ${pad3(c1_2)} g）</strong>`);
-  lines.push(`<strong> 2投：${pad3(b2)} g   （累計 ${pad3(total)} g）</strong>`);
-  lines.push("");
+  lines.push(`<strong>── 後半60%──</strong>`);
 
-  lines.push("── その他の分割例 ──");
-  lines.push("1回（薄め）");
-  lines.push(` 1投：${pad3(back)} g   （累計 ${pad3(total)} g）`);
-  lines.push("");
-
-  lines.push("3回（濃いめ）");
-  lines.push(` 1投：${pad3(b3)} g   （累計 ${pad3(c1_3)} g）`);
-  lines.push(` 2投：${pad3(b3)} g   （累計 ${pad3(c2_3)} g）`);
-  lines.push(` 3投：${pad3(b3)} g   （累計 ${pad3(total)} g）`);
+  if (splitCount === 1) {
+    lines.push(`<strong> 1投：${pad3(back)} g   （累計 ${pad3(total)} g）</strong>`);
+  } else if (splitCount === 2) {
+    lines.push(`<strong> 1投：${pad3(b2)} g   （累計 ${pad3(c1_2)} g）</strong>`);
+    lines.push(`<strong> 2投：${pad3(b2)} g   （累計 ${pad3(total)} g）</strong>`);
+  } else {
+    lines.push(`<strong> 1投：${pad3(b3)} g   （累計 ${pad3(c1_3)} g）</strong>`);
+    lines.push(`<strong> 2投：${pad3(b3)} g   （累計 ${pad3(c2_3)} g）</strong>`);
+    lines.push(`<strong> 3投：${pad3(b3)} g   （累計 ${pad3(total)} g）</strong>`);
+  }
   lines.push("");
 
   lines.push("4:6 Method by Tetsu Kasuya");
