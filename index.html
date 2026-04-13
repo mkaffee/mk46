@@ -81,7 +81,7 @@ input:focus {
   flex: 1;
 }
 
-/* 蒸らし倍率ボタン・後半分割ボタン共通 */
+/* 蒸らし倍率・後半分割ボタン共通 */
 .bloom-row {
   display: flex;
   gap: 8px;
@@ -236,19 +236,19 @@ input:focus {
   </div>
   <div>
     <label>挽目</label>
-    <input id="grind" type="number" step="0.1" placeholder="例：3.5">
+    <input id="grind" type="number" placeholder="例：3.5">
   </div>
 </div>
 
 <label style="margin-top:10px;">蒸らし倍率</label>
-<div class="bloom-row">
-  <button id="bloom2"   onclick="setBloom(2,   this)">× 2</button>
-  <button id="bloom2_5" onclick="setBloom(2.5, this)">× 2.5</button>
-  <button id="bloom3"   onclick="setBloom(3,   this)" class="selected">× 3</button>
+<div class="bloom-row" id="bloomRow">
+  <button onclick="setBloom(2,   this)">× 2</button>
+  <button onclick="setBloom(2.5, this)">× 2.5</button>
+  <button onclick="setBloom(3,   this)" class="selected">× 3</button>
 </div>
 
 <label style="margin-top:10px;">後半分割</label>
-<div class="bloom-row">
+<div class="bloom-row" id="splitRow">
   <button onclick="setSplit(1, this)">1回</button>
   <button onclick="setSplit(2, this)" class="selected">2回</button>
   <button onclick="setSplit(3, this)">3回</button>
@@ -276,26 +276,14 @@ const beansEl        = document.getElementById("beans");
 const grindEl        = document.getElementById("grind");
 const resultEl       = document.getElementById("result");
 const brewBtn        = document.getElementById("brewBtn");
+const bloomRow       = document.getElementById("bloomRow");
+const splitRow       = document.getElementById("splitRow");
 const beanModal      = document.getElementById("beanModal");
 const beanModalTitle = document.getElementById("beanModalTitle");
 const beanModalList  = document.getElementById("beanModalList");
 
 let bloomRatio = 3;
 let splitCount = 2;
-
-function setBloom(v, btn) {
-  bloomRatio = v;
-  document.querySelectorAll(".bloom-row").item(0).querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-  btn.classList.add("selected");
-  setBrewed(false);
-}
-
-function setSplit(v, btn) {
-  splitCount = v;
-  document.querySelectorAll(".bloom-row").item(1).querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-  btn.classList.add("selected");
-  setBrewed(false);
-}
 
 function pad3(n) {
   return String(n).padStart(3, " ");
@@ -306,6 +294,41 @@ function pad3(n) {
 ------------------------- */
 function setBrewed(on) {
   brewBtn.classList.toggle("brewed", on);
+}
+
+/* -------------------------
+   蒸らし倍率ボタン
+------------------------- */
+function setBloom(v, btn) {
+  bloomRatio = v;
+  bloomRow.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  setBrewed(false);
+}
+
+function applyBloom(v) {
+  bloomRatio = v;
+  bloomRow.querySelectorAll("button").forEach(b => {
+    b.classList.toggle("selected", parseFloat(b.textContent.replace("×","").trim()) === v);
+  });
+}
+
+/* -------------------------
+   後半分割ボタン
+------------------------- */
+function setSplit(v, btn) {
+  splitCount = v;
+  splitRow.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  setBrewed(false);
+}
+
+function applySplit(v) {
+  splitCount = v;
+  const labels = [1, 2, 3];
+  splitRow.querySelectorAll("button").forEach((b, i) => {
+    b.classList.toggle("selected", labels[i] === v);
+  });
 }
 
 /* -------------------------
@@ -369,6 +392,8 @@ function loadBean(name) {
   finalEl.value    = data.final;
   beansEl.value    = data.beans;
   grindEl.value    = data.grind || "";
+  applyBloom(data.bloom  || 3);
+  applySplit(data.split  || 2);
   setBrewed(false);
 }
 
@@ -384,7 +409,9 @@ function clearAll() {
   finalEl.value        = "";
   beansEl.value        = "";
   grindEl.value        = "";
-  resultEl.textContent = "";
+  resultEl.innerHTML   = "";
+  applyBloom(3);
+  applySplit(2);
   setBrewed(false);
 }
 
@@ -474,7 +501,9 @@ function saveBean() {
   const data = {
     final: finalEl.value,
     beans: beansEl.value,
-    grind: grindEl.value.trim()
+    grind: grindEl.value.trim(),
+    bloom: bloomRatio,
+    split: splitCount
   };
   localStorage.setItem("bean_" + name, JSON.stringify(data));
   localStorage.setItem("lastBean", name);
