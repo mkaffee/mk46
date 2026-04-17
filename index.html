@@ -464,7 +464,8 @@ function calc() {
   let lines = [];
 
   const ratio = Math.round(total / beans);
-  if (name) lines.push(`<strong>${name}　${beans} g　>> 1:${ratio}</strong>`);
+  if (name) lines.push(`<strong>${name}　${beans} g</strong>`);
+  lines.push(`<strong>Brew Ratio >> 1:${ratio}</strong>`);
   if (grind) lines.push(`挽目：${grind}`);
   if (name || grind) lines.push("");
 
