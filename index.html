@@ -471,20 +471,20 @@ function calc() {
 
   lines.push(`<strong>── 前半40%──</strong>`);
   lines.push(`<strong> 1投：${pad3(first)} g</strong>`);
-  lines.push(`<strong> 2投：${pad3(second)} g  （累計 ${pad3(front)} g）</strong>`);
+  lines.push(`<strong> 2投：${pad3(second)} g （累計 ${pad3(front)} g）</strong>`);
   lines.push("");
 
   lines.push(`<strong>── 後半60%──</strong>`);
 
   if (splitCount === 1) {
-    lines.push(`<strong> 1投：${pad3(back)} g  （累計 ${pad3(total)} g）</strong>`);
+    lines.push(`<strong> 1投：${pad3(back)} g （累計 ${pad3(total)} g）</strong>`);
   } else if (splitCount === 2) {
-    lines.push(`<strong> 1投：${pad3(b2)} g  （累計 ${pad3(c1_2)} g）</strong>`);
-    lines.push(`<strong> 2投：${pad3(b2)} g  （累計 ${pad3(total)} g）</strong>`);
+    lines.push(`<strong> 1投：${pad3(b2)} g （累計 ${pad3(c1_2)} g）</strong>`);
+    lines.push(`<strong> 2投：${pad3(b2)} g （累計 ${pad3(total)} g）</strong>`);
   } else {
-    lines.push(`<strong> 1投：${pad3(b3)} g  （累計 ${pad3(c1_3)} g）</strong>`);
-    lines.push(`<strong> 2投：${pad3(b3)} g  （累計 ${pad3(c2_3)} g）</strong>`);
-    lines.push(`<strong> 3投：${pad3(b3)} g  （累計 ${pad3(total)} g）</strong>`);
+    lines.push(`<strong> 1投：${pad3(b3)} g （累計 ${pad3(c1_3)} g）</strong>`);
+    lines.push(`<strong> 2投：${pad3(b3)} g （累計 ${pad3(c2_3)} g）</strong>`);
+    lines.push(`<strong> 3投：${pad3(b3)} g （累計 ${pad3(total)} g）</strong>`);
   }
   lines.push("");
 
