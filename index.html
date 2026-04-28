@@ -31,7 +31,7 @@ label {
   margin-bottom: 4px;
 }
 
-input {
+input, select {
   width: 100%;
   padding: 12px;
   font-size: 1.1rem;
@@ -40,9 +40,10 @@ input {
   background: #fff;
   margin-bottom: 12px;
   -webkit-appearance: none;
+  font-family: monospace;
 }
 
-input:focus {
+input:focus, select:focus {
   outline: none;
   border-color: #8B4513;
 }
@@ -69,6 +70,36 @@ input:focus {
 
 .btn-row button:active {
   background: #d4c8bc;
+}
+
+/* 湯量ショートカットボタン */
+.water-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.water-row button {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 0.95rem;
+  font-family: monospace;
+  border: none;
+  border-radius: 8px;
+  background: #e8e0d8;
+  color: #333;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, color 0.2s;
+}
+
+.water-row button.selected {
+  background: #5c3317;
+  color: #f5f0eb;
+}
+
+.water-row button:active {
+  opacity: 0.85;
 }
 
 /* 3列入力 */
@@ -225,14 +256,27 @@ input:focus {
   <button onclick="clearAll()">クリア</button>
 </div>
 
+<label>湯量</label>
+<div class="water-row" id="waterRow">
+  <button onclick="setWater(500, this)">500g</button>
+  <button onclick="setWater(250, this)">250g</button>
+  <button onclick="setWater(0, this)">手動</button>
+</div>
+
 <div class="input-row">
   <div>
     <label>湯量(g)</label>
     <input id="final" type="number" placeholder="例：500">
   </div>
   <div>
-    <label>豆量(g)</label>
-    <input id="beans" type="number" placeholder="自動計算">
+    <label>抽出率</label>
+    <select id="ratioSel">
+      <option value="15">1:15</option>
+      <option value="16">1:16</option>
+      <option value="17">1:17</option>
+      <option value="18" selected>1:18</option>
+      <option value="19">1:19</option>
+    </select>
   </div>
   <div>
     <label>挽目</label>
@@ -272,10 +316,11 @@ input:focus {
 <script>
 const beanNameEl     = document.getElementById("beanName");
 const finalEl        = document.getElementById("final");
-const beansEl        = document.getElementById("beans");
+const ratioSel       = document.getElementById("ratioSel");
 const grindEl        = document.getElementById("grind");
 const resultEl       = document.getElementById("result");
 const brewBtn        = document.getElementById("brewBtn");
+const waterRow       = document.getElementById("waterRow");
 const bloomRow       = document.getElementById("bloomRow");
 const splitRow       = document.getElementById("splitRow");
 const beanModal      = document.getElementById("beanModal");
@@ -284,10 +329,6 @@ const beanModalList  = document.getElementById("beanModalList");
 
 let bloomRatio = 3;
 let splitCount = 2;
-
-function pad2(n) {
-  return String(n).padStart(2, " ");
-}
 
 function pad3(n) {
   return String(n).padStart(3, " ");
@@ -298,6 +339,28 @@ function pad3(n) {
 ------------------------- */
 function setBrewed(on) {
   brewBtn.classList.toggle("brewed", on);
+}
+
+/* -------------------------
+   湯量ショートカットボタン
+------------------------- */
+function setWater(v, btn) {
+  waterRow.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  if (v > 0) {
+    finalEl.value = v;
+  } else {
+    finalEl.value = "";
+    finalEl.focus();
+  }
+  setBrewed(false);
+}
+
+function applyWater(v) {
+  waterRow.querySelectorAll("button").forEach(b => {
+    const val = b.textContent === "手動" ? 0 : parseInt(b.textContent);
+    b.classList.toggle("selected", val === v);
+  });
 }
 
 /* -------------------------
@@ -392,12 +455,13 @@ function loadBean(name) {
   const raw = localStorage.getItem("bean_" + name);
   if (!raw) return;
   const data = JSON.parse(raw);
-  beanNameEl.value = name;
-  finalEl.value    = data.final;
-  beansEl.value    = data.beans;
-  grindEl.value    = data.grind || "";
-  applyBloom(data.bloom  || 3);
-  applySplit(data.split  || 2);
+  beanNameEl.value  = name;
+  finalEl.value     = data.final;
+  ratioSel.value    = data.brewRatio || 18;
+  grindEl.value     = data.grind || "";
+  applyWater(Number(data.final) === 500 ? 500 : Number(data.final) === 250 ? 250 : 0);
+  applyBloom(data.bloom || 3);
+  applySplit(data.split || 2);
   setBrewed(false);
 }
 
@@ -409,43 +473,40 @@ function deleteBean(name) {
 }
 
 function clearAll() {
-  beanNameEl.value     = "";
-  finalEl.value        = "";
-  beansEl.value        = "";
-  grindEl.value        = "";
-  resultEl.innerHTML   = "";
+  beanNameEl.value   = "";
+  finalEl.value      = "";
+  grindEl.value      = "";
+  ratioSel.value     = 18;
+  resultEl.innerHTML = "";
+  applyWater(0);
   applyBloom(3);
   applySplit(2);
   setBrewed(false);
 }
 
-/* -------------------------
-   湯量 → 豆量 自動計算
-------------------------- */
 finalEl.addEventListener("input", () => {
-  const total = Number(finalEl.value);
-  if (!total) return;
-  beansEl.value = Math.floor(total / 15);
   setBrewed(false);
+  const total = Number(finalEl.value);
+  if (total === 500 || total === 250) {
+    applyWater(total);
+  } else {
+    applyWater(0);
+  }
 });
 
 /* -------------------------
    計算本体
 ------------------------- */
 function calc() {
-  const total = Number(finalEl.value);
-  let beans   = Number(beansEl.value);
+  const total     = Number(finalEl.value);
+  const brewRatio = Number(ratioSel.value);
 
   if (!total) {
     resultEl.textContent = "湯量を入力してください。";
     return;
   }
 
-  if (!beans) {
-    beans = Math.floor(total / 15);
-    beansEl.value = beans;
-  }
-
+  const beans  = Math.floor(total / brewRatio);
   const first  = Math.round(beans * bloomRatio);
   const front  = Math.round(total * 0.4);
   const second = front - first;
@@ -463,9 +524,9 @@ function calc() {
 
   let lines = [];
 
-  const ratio = Math.round(total / beans);
-  if (name) lines.push(`<strong>${name}　${beans} g</strong>`);
-  lines.push(`<strong>Brew Ratio >> 1:${ratio}</strong>`);
+  if (name) lines.push(`<strong>${name}</strong>`);
+  lines.push(`<strong>豆量：${beans} g</strong>`);
+  lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
   if (grind) lines.push(`挽目：${grind}`);
   if (name || grind) lines.push("");
 
@@ -505,11 +566,11 @@ function saveBean() {
   const name = beanNameEl.value.trim();
   if (!name) return;
   const data = {
-    final: finalEl.value,
-    beans: beansEl.value,
-    grind: grindEl.value.trim(),
-    bloom: bloomRatio,
-    split: splitCount
+    final:     finalEl.value,
+    brewRatio: ratioSel.value,
+    grind:     grindEl.value.trim(),
+    bloom:     bloomRatio,
+    split:     splitCount
   };
   localStorage.setItem("bean_" + name, JSON.stringify(data));
   localStorage.setItem("lastBean", name);
