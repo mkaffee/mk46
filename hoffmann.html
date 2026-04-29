@@ -115,7 +115,7 @@ input:focus {
   border-radius: 10px;
   font-size: 1rem;
   line-height: 1.7;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .modal {
@@ -175,6 +175,7 @@ input:focus {
   color: #333;
   cursor: pointer;
 }
+
 .btn-row button.active {
   background: #5c3317;
   color: #f5f0eb;
@@ -184,6 +185,10 @@ input:focus {
 <body>
 
 <h2>Hoffmann V60 Brewer</h2>
+
+<div style="text-align:right;margin-bottom:12px;">
+  <a href="mk46.html" style="font-family:monospace;font-size:0.85rem;color:#5c3317;text-decoration:none;background:#e8e0d8;padding:6px 12px;border-radius:6px;">→ 4:6 Method</a>
+</div>
 
 <label>豆の名前</label>
 <input id="beanName" placeholder="例：エチオピア イルガチェフェ" autocomplete="off">
@@ -254,7 +259,6 @@ function setFinal(val) {
   finalEl.setAttribute("readonly", true);
   beansEl.value = Math.round(val / 18);
   setBrewed(false);
-  // ボタンのアクティブ状態
   document.querySelectorAll(".btn-row button[id^='btn']").forEach(b => b.classList.remove("active"));
   if (val === 500) document.getElementById("btn500").classList.add("active");
   if (val === 250) document.getElementById("btn250").classList.add("active");
@@ -347,7 +351,6 @@ function clearAll() {
   setBrewed(false);
 }
 
-// 出来上がり量 → 豆量自動計算（1:18）
 finalEl.addEventListener("input", () => {
   const total = Number(finalEl.value);
   if (!total) return;
@@ -369,16 +372,11 @@ function calc() {
     beansEl.value = beans;
   }
 
-  // ホフマン式計算
-  // 蒸らし：豆の2倍量
-  const bloom   = beans * 2;
-  // 1投目：全体の60%まで（蒸らし分含む）
+  const bloom       = beans * 2;
   const pour1target = Math.round(total * 0.6);
-  const pour1   = pour1target - bloom;
-  // 2投目：残り
-  const pour2   = total - pour1target;
+  const pour1       = pour1target - bloom;
+  const pour2       = total - pour1target;
 
-  // 累計
   const cum_bloom = bloom;
   const cum_pour1 = pour1target;
   const cum_pour2 = total;
