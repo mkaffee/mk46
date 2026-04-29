@@ -175,6 +175,10 @@ input:focus {
   color: #333;
   cursor: pointer;
 }
+.btn-row button.active {
+  background: #5c3317;
+  color: #f5f0eb;
+}
 </style>
 </head>
 <body>
@@ -190,10 +194,16 @@ input:focus {
   <button onclick="clearAll()">クリア</button>
 </div>
 
+<div class="btn-row">
+  <button id="btn500" onclick="setFinal(500)">500 g</button>
+  <button id="btn250" onclick="setFinal(250)">250 g</button>
+  <button id="btnManual" onclick="setFinalManual()">手動</button>
+</div>
+
 <div class="input-row">
   <div>
     <label>出来上がり(g)</label>
-    <input id="final" type="number" placeholder="例：500">
+    <input id="final" type="number" placeholder="例：500" readonly>
   </div>
   <div>
     <label>豆量(g)</label>
@@ -236,6 +246,28 @@ function pad3(n) {
 
 function setBrewed(on) {
   brewBtn.classList.toggle("brewed", on);
+}
+
+function setFinal(val) {
+  finalEl.removeAttribute("readonly");
+  finalEl.value = val;
+  finalEl.setAttribute("readonly", true);
+  beansEl.value = Math.round(val / 18);
+  setBrewed(false);
+  // ボタンのアクティブ状態
+  document.querySelectorAll(".btn-row button[id^='btn']").forEach(b => b.classList.remove("active"));
+  if (val === 500) document.getElementById("btn500").classList.add("active");
+  if (val === 250) document.getElementById("btn250").classList.add("active");
+}
+
+function setFinalManual() {
+  finalEl.removeAttribute("readonly");
+  finalEl.value = "";
+  beansEl.value = "";
+  setBrewed(false);
+  document.querySelectorAll(".btn-row button[id^='btn']").forEach(b => b.classList.remove("active"));
+  document.getElementById("btnManual").classList.add("active");
+  finalEl.focus();
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -285,9 +317,15 @@ function loadBean(name) {
   if (!raw) return;
   const data = JSON.parse(raw);
   beanNameEl.value = name;
-  finalEl.value    = data.final;
-  beansEl.value    = data.beans;
-  grindEl.value    = data.grind || "";
+  const val = Number(data.final);
+  if (val === 500 || val === 250) {
+    setFinal(val);
+  } else {
+    setFinalManual();
+    finalEl.value = data.final;
+  }
+  beansEl.value = data.beans;
+  grindEl.value = data.grind || "";
   setBrewed(false);
 }
 
@@ -374,7 +412,9 @@ function calc() {
 
   resultEl.innerHTML = lines.join("\n");
   setBrewed(true);
-  resultEl.scrollIntoView({ behavior: "smooth" });
+  setTimeout(() => {
+    resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 50);
   saveBean();
 }
 
