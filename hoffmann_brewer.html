@@ -307,11 +307,11 @@ function clearAll() {
   setBrewed(false);
 }
 
-// 出来上がり量 → 豆量自動計算（1:16.7）
+// 出来上がり量 → 豆量自動計算（1:18）
 finalEl.addEventListener("input", () => {
   const total = Number(finalEl.value);
   if (!total) return;
-  beansEl.value = Math.round(total / 16.7);
+  beansEl.value = Math.round(total / 18);
   setBrewed(false);
 });
 
@@ -325,7 +325,7 @@ function calc() {
   }
 
   if (!beans) {
-    beans = Math.round(total / 16.7);
+    beans = Math.round(total / 18);
     beansEl.value = beans;
   }
 
@@ -347,14 +347,16 @@ function calc() {
   const grind = grindEl.value.trim();
 
   let lines = [];
-
+  const ratio = (total / beans).toFixed(1);
   if (name) lines.push(`<strong>${name}　${beans} g</strong>`);
+  else lines.push(`<strong>${beans} g</strong>`);
+  lines.push(`Brew Ratio >> 1:${ratio}`);
   if (grind) lines.push(`挽目：${grind}`);
   if (name || grind) lines.push("");
 
   lines.push(`<strong>【蒸らし】　0:00〜0:45</strong>`);
   lines.push(`<strong> 注湯：${pad3(bloom)} g   （累計 ${pad3(cum_bloom)} g）</strong>`);
-  lines.push(`<strong> → 即撹拌</strong>`);
+  lines.push(`<strong> → 即ゆする</strong>`);
   lines.push("");
 
   lines.push(`<strong>【1投目】　0:45〜1:15</strong>`);
@@ -363,7 +365,7 @@ function calc() {
 
   lines.push(`<strong>【2投目】　1:15〜1:45</strong>`);
   lines.push(`<strong> 注湯：${pad3(pour2)} g   （累計 ${pad3(cum_pour2)} g）</strong>`);
-  lines.push(`<strong> → 撹拌 → 撹拌（粉床を平らに）</strong>`);
+  lines.push(`<strong> → ゆする → 湯面半分でゆする（粉床を平らに）</strong>`);
   lines.push("");
 
   lines.push(`落ち切り目標：3:30`);
