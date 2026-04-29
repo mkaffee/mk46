@@ -338,10 +338,12 @@ function deleteBean(name) {
 
 function clearAll() {
   beanNameEl.value     = "";
+  finalEl.removeAttribute("readonly");
   finalEl.value        = "";
   beansEl.value        = "";
   grindEl.value        = "";
   resultEl.textContent = "";
+  document.querySelectorAll(".btn-row button[id^='btn']").forEach(b => b.classList.remove("active"));
   setBrewed(false);
 }
 
