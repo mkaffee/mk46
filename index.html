@@ -1,1 +1,83 @@
 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Coffee Brewer</title>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: monospace;
+  padding: 32px 16px;
+  background: #f5f0eb;
+  color: #222;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin: 0 0 8px;
+  color: #5c3317;
+}
+
+p {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0 0 40px;
+}
+
+.menu-btn {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+  font-family: monospace;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  background: #e8e0d8;
+  color: #5c3317;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s;
+}
+
+.menu-btn:active {
+  background: #d4c8bc;
+}
+
+.menu-btn span {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: normal;
+  color: #888;
+  margin-top: 4px;
+}
+</style>
+</head>
+<body>
+
+<h2>Coffee Brewer</h2>
+<p>抽出方式を選んでください</p>
+
+<a class="menu-btn" href="mk46.html">
+  4:6 Method
+  <span>Tetsu Kasuya</span>
+</a>
+
+<a class="menu-btn" href="hoffmann.html">
+  Hoffmann V60
+  <span>James Hoffmann</span>
+</a>
+
+</body>
+</html>
