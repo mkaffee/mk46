@@ -516,13 +516,6 @@ function calc() {
   const second = front - first;
   const back   = total - front;
 
-  const b2 = Math.round(back / 2);
-  const b3 = Math.round(back / 3);
-
-  const c1_2 = first + second + b2;
-  const c1_3 = first + second + b3;
-  const c2_3 = first + second + b3 * 2;
-
   const name  = beanNameEl.value.trim();
   const grind = grindEl.value.trim();
 
@@ -541,15 +534,16 @@ function calc() {
 
   lines.push(`<strong>── 後半60%──</strong>`);
 
-  if (splitCount === 1) {
-    lines.push(`<strong> 1投：${pad3(back)} g （累計 ${pad3(total)} g）</strong>`);
-  } else if (splitCount === 2) {
-    lines.push(`<strong> 1投：${pad3(b2)} g （累計 ${pad3(c1_2)} g）</strong>`);
-    lines.push(`<strong> 2投：${pad3(b2)} g （累計 ${pad3(total)} g）</strong>`);
-  } else {
-    lines.push(`<strong> 1投：${pad3(b3)} g （累計 ${pad3(c1_3)} g）</strong>`);
-    lines.push(`<strong> 2投：${pad3(b3)} g （累計 ${pad3(c2_3)} g）</strong>`);
-    lines.push(`<strong> 3投：${pad3(b3)} g （累計 ${pad3(total)} g）</strong>`);
+  let currentTotal = front;
+  for (let i = 1; i <= splitCount; i++) {
+    let pour;
+    if (i === splitCount) {
+      pour = total - currentTotal;
+    } else {
+      pour = Math.round(back / splitCount);
+    }
+    currentTotal += pour;
+    lines.push(`<strong> ${i}投：${pad3(pour)} g （累計 ${pad3(currentTotal)} g）</strong>`);
   }
   lines.push("");
 
