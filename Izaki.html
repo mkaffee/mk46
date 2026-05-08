@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Izaki Method Brewer</title>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: monospace;
+  padding: 16px;
+  background: #f0f5ea;
+  color: #222;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin: 0 0 16px;
+  color: #5c3317;
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 12px;
+  -webkit-appearance: none;
+  font-family: monospace;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #8B4513;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.btn-row button {
+  flex: 1;
+  padding: 11px 0;
+  font-size: 0.95rem;
+  font-family: monospace;
+  border: none;
+  border-radius: 8px;
+  background: #e8e0d8;
+  color: #333;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-row button:active {
+  background: #d4c8bc;
+}
+
+.btn-row button.active {
+  background: #5c3317;
+  color: #f5f0eb;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.input-row > div {
+  flex: 1;
+}
+
+#brewBtn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin-top: 14px;
+  font-size: 1.3rem;
+  font-family: monospace;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  background: #e8e0d8;
+  color: #5c3317;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#brewBtn.brewed {
+  background: #5c3317;
+  color: #f5f0eb;
+}
+
+#brewBtn:active {
+  opacity: 0.85;
+}
+
+#result {
+  white-space: pre-wrap;
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #d4c8bc;
+  background: #fff;
+  border-radius: 10px;
+  font-size: 1rem;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 16px;
+  border-radius: 14px;
+  width: 88%;
+  max-width: 400px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.bean-item {
+  padding: 13px 8px;
+  border-bottom: 1px solid #f0ebe6;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.bean-item:last-child {
+  border-bottom: none;
+}
+
+.bean-item:active {
+  background: #f5f0eb;
+}
+
+.modal-footer {
+  margin-top: 10px;
+  display: flex;
+}
+
+.modal-footer button {
+  flex: 1;
+  padding: 13px;
+  font-size: 1rem;
+  font-family: monospace;
+  border: none;
+  border-radius: 8px;
+  background: #e8e0d8;
+  color: #333;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<h2>Izaki Method Brewer</h2>
+
+<div style="text-align:right;margin-bottom:12px;">
+  <a href="mk46.html" style="font-family:monospace;font-size:0.85rem;color:#5c3317;text-decoration:none;background:#e8e0d8;padding:6px 10px;border-radius:6px;">→ 4:6 Method</a>
+  &nbsp;
+  <a href="hoffmann.html" style="font-family:monospace;font-size:0.85rem;color:#5c3317;text-decoration:none;background:#e8e0d8;padding:6px 10px;border-radius:6px;">→ Hoffmann</a>
+</div>
+
+<label>豆の名前</label>
+<input id="beanName" placeholder="例：エチオピア イルガチェフェ" autocomplete="off">
+
+<div class="btn-row">
+  <button onclick="openBeanModal('select')">豆リスト</button>
+  <button onclick="openBeanModal('delete')">削除</button>
+  <button onclick="clearAll()">クリア</button>
+</div>
+
+<label>湯量</label>
+<div class="btn-row" id="waterRow">
+  <button id="btn500" onclick="setFinal(500)">500 g</button>
+  <button id="btn250" onclick="setFinal(250)">250 g</button>
+  <button id="btnManual" onclick="setFinalManual()">手動</button>
+</div>
+
+<div class="input-row">
+  <div>
+    <label>湯量(g)</label>
+    <input id="final" type="number" placeholder="例：500" readonly>
+  </div>
+  <div>
+    <label>抽出率</label>
+    <select id="ratioSel">
+      <option value="15">1:15</option>
+      <option value="16" selected>1:16</option>
+      <option value="17">1:17</option>
+      <option value="18">1:18</option>
+      <option value="19">1:19</option>
+    </select>
+  </div>
+  <div>
+    <label>挽目</label>
+    <input id="grind" type="number" placeholder="例：3.5">
+  </div>
+</div>
+
+<button id="brewBtn" onclick="calc()">Brew</button>
+
+<div id="result"></div>
+
+<div id="beanModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title" id="beanModalTitle"></div>
+    <div id="beanModalList"></div>
+    <div class="modal-footer">
+      <button onclick="closeBeanModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const beanNameEl     = document.getElementById("beanName");
+const finalEl        = document.getElementById("final");
+const ratioSel       = document.getElementById("ratioSel");
+const grindEl        = document.getElementById("grind");
+const resultEl       = document.getElementById("result");
+const brewBtn        = document.getElementById("brewBtn");
+const beanModal      = document.getElementById("beanModal");
+const beanModalTitle = document.getElementById("beanModalTitle");
+const beanModalList  = document.getElementById("beanModalList");
+
+function pad3(n) {
+  return String(n).padStart(3, " ");
+}
+
+function setBrewed(on) {
+  brewBtn.classList.toggle("brewed", on);
+}
+
+/* -------------------------
+   湯量ボタン
+------------------------- */
+function setFinal(val) {
+  finalEl.removeAttribute("readonly");
+  finalEl.value = val;
+  finalEl.setAttribute("readonly", true);
+  setBrewed(false);
+  document.querySelectorAll("#waterRow button").forEach(b => b.classList.remove("active"));
+  if (val === 500) document.getElementById("btn500").classList.add("active");
+  if (val === 250) document.getElementById("btn250").classList.add("active");
+}
+
+function setFinalManual() {
+  finalEl.removeAttribute("readonly");
+  finalEl.value = "";
+  setBrewed(false);
+  document.querySelectorAll("#waterRow button").forEach(b => b.classList.remove("active"));
+  document.getElementById("btnManual").classList.add("active");
+  finalEl.focus();
+}
+
+function applyWater(v) {
+  document.querySelectorAll("#waterRow button").forEach(b => b.classList.remove("active"));
+  if (v === 500) document.getElementById("btn500").classList.add("active");
+  else if (v === 250) document.getElementById("btn250").classList.add("active");
+  else document.getElementById("btnManual").classList.add("active");
+}
+
+/* -------------------------
+   起動時：lastBean 自動ロード
+------------------------- */
+window.addEventListener("DOMContentLoaded", () => {
+  const lastBean = localStorage.getItem("izaki_lastBean");
+  if (lastBean) loadBean(lastBean);
+});
+
+/* -------------------------
+   モーダル
+------------------------- */
+let beanModalMode = "select";
+
+function openBeanModal(mode) {
+  beanModalMode = mode;
+  const keys  = Object.keys(localStorage).filter(k => k.startsWith("izaki_bean_"));
+  const names = keys.map(k => k.substring(11));
+  beanModalList.innerHTML = "";
+  if (names.length === 0) {
+    beanModalTitle.textContent = "保存された豆はありません";
+  } else {
+    beanModalTitle.textContent = (mode === "select") ? "豆を選んでください" : "削除する豆を選んでください";
+    names.forEach(name => {
+      const div = document.createElement("div");
+      div.textContent = name;
+      div.className = "bean-item";
+      div.onclick = () => {
+        if (beanModalMode === "select") {
+          loadBean(name);
+        } else {
+          deleteBean(name);
+        }
+        closeBeanModal();
+      };
+      beanModalList.appendChild(div);
+    });
+  }
+  beanModal.style.display = "flex";
+}
+
+function closeBeanModal() {
+  beanModal.style.display = "none";
+}
+
+beanModal.addEventListener("click", (e) => {
+  if (e.target === beanModal) closeBeanModal();
+});
+
+function loadBean(name) {
+  const raw = localStorage.getItem("izaki_bean_" + name);
+  if (!raw) return;
+  const data = JSON.parse(raw);
+  beanNameEl.value = name;
+  const val = Number(data.final);
+  finalEl.removeAttribute("readonly");
+  finalEl.value = data.final;
+  finalEl.setAttribute("readonly", true);
+  applyWater(val === 500 ? 500 : val === 250 ? 250 : 0);
+  ratioSel.value = data.brewRatio || 16;
+  grindEl.value  = data.grind || "";
+  setBrewed(false);
+}
+
+function deleteBean(name) {
+  localStorage.removeItem("izaki_bean_" + name);
+  const lastBean = localStorage.getItem("izaki_lastBean");
+  if (lastBean === name) localStorage.removeItem("izaki_lastBean");
+  alert("削除しました: " + name);
+}
+
+function clearAll() {
+  beanNameEl.value = "";
+  finalEl.removeAttribute("readonly");
+  finalEl.value    = "";
+  grindEl.value    = "";
+  ratioSel.value   = 16;
+  resultEl.innerHTML = "";
+  document.querySelectorAll("#waterRow button").forEach(b => b.classList.remove("active"));
+  setBrewed(false);
+}
+
+finalEl.addEventListener("input", () => {
+  setBrewed(false);
+});
+
+/* -------------------------
+   計算本体
+------------------------- */
+function calc() {
+  const total     = Number(finalEl.value);
+  const brewRatio = Number(ratioSel.value);
+
+  if (!total) {
+    resultEl.textContent = "湯量を入力してください。";
+    return;
+  }
+
+  const beans = Math.floor(total / brewRatio);
+  const pour1 = Math.round(total * 0.2);  // 蒸らし20%
+  const pour2 = Math.round(total * 0.2);  // 2投目20%
+  const pour3 = total - pour1 - pour2;    // 3投目残り60%
+
+  const cum1 = pour1;
+  const cum2 = pour1 + pour2;
+  const cum3 = total;
+
+  const name  = beanNameEl.value.trim();
+  const grind = grindEl.value.trim();
+
+  let lines = [];
+
+  if (name) lines.push(`<strong>${name}</strong>`);
+  lines.push(`<strong>豆量：${beans} g</strong>`);
+  lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
+  if (grind) lines.push(`挽目：${grind}`);
+  lines.push("");
+
+  lines.push(`<strong>── 蒸らし　0:00〜0:15 ──</strong>`);
+  lines.push(`<strong> 注湯：${pad3(pour1)} g （累計 ${pad3(cum1)} g）</strong>`);
+  lines.push(`<strong> → ゆすり撹拌（40秒待機）</strong>`);
+  lines.push("");
+
+  lines.push(`<strong>── 2投目　1:00〜1:15 ──</strong>`);
+  lines.push(`<strong> 注湯：${pad3(pour2)} g （累計 ${pad3(cum2)} g）</strong>`);
+  lines.push(`<strong> （45秒待機）</strong>`);
+  lines.push("");
+
+  lines.push(`<strong>── 3投目　2:00〜2:30 ──</strong>`);
+  lines.push(`<strong> 注湯：${pad3(pour3)} g （累計 ${pad3(cum3)} g）</strong>`);
+  lines.push(`<strong> → ゆすり撹拌</strong>`);
+  lines.push("");
+
+  lines.push(`落ち切り目標：3:00〜4:00`);
+  lines.push("");
+  lines.push("Izaki Method / Hidenori Izaki");
+
+  resultEl.innerHTML = lines.join("\n");
+  setBrewed(true);
+  setTimeout(() => {
+    resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 50);
+  saveBean();
+}
+
+/* -------------------------
+   保存
+------------------------- */
+function saveBean() {
+  const name = beanNameEl.value.trim();
+  if (!name) return;
+  const data = {
+    final:     finalEl.value,
+    brewRatio: ratioSel.value,
+    grind:     grindEl.value.trim()
+  };
+  localStorage.setItem("izaki_bean_" + name, JSON.stringify(data));
+  localStorage.setItem("izaki_lastBean", name);
+}
+</script>
+
+</body>
+</html>
