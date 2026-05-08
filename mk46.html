@@ -337,7 +337,16 @@ const splitRow       = document.getElementById("splitRow");
 const beanModal      = document.getElementById("beanModal");
 const beanModalTitle = document.getElementById("beanModalTitle");
 const beanModalList  = document.getElementById("beanModalList");
-
+/* 追加ここから */
+grindEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    grindEl.blur();
+    document.activeElement.blur();
+  }
+});
+/* 追加ここまで */
+  
 let bloomRatio = 3;
 let splitCount = 2;
 
