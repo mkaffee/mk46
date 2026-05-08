@@ -226,7 +226,12 @@ input:focus, select:focus {
   </div>
   <div>
     <label>挽目</label>
-    <input id="grind" type="number" placeholder="例：3.5">
+    <input
+  id="grind"
+  type="text"
+  inputmode="decimal"
+  enterkeyhint="done"
+  placeholder="例：3.5">
   </div>
 </div>
 
@@ -255,6 +260,16 @@ const beanModal      = document.getElementById("beanModal");
 const beanModalTitle = document.getElementById("beanModalTitle");
 const beanModalList  = document.getElementById("beanModalList");
 
+/* 追加ここから */
+grindEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    grindEl.blur();
+    document.activeElement.blur();
+  }
+});
+/* 追加ここまで */
+  
 function pad3(n) {
   return String(n).padStart(3, " ");
 }
