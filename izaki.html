@@ -145,14 +145,20 @@ function pad3(n) { return String(n).padStart(3, " "); }
 function setBrewed(on) { brewBtn.classList.toggle("brewed", on); }
 
 function buildBeanSelect(selectedName) {
-  const names = Object.keys(localStorage)
+  const orderRaw = localStorage.getItem("master_order");
+  const order    = orderRaw ? JSON.parse(orderRaw) : [];
+  const all      = Object.keys(localStorage)
     .filter(k => k.startsWith("master_bean_"))
     .map(k => k.substring(12));
+  const missing  = all.filter(n => !order.includes(n));
+  const names    = [...order.filter(n => all.includes(n)), ...missing];
+
   beanSel.innerHTML = "";
   const blank = document.createElement("option");
   blank.value = "";
   blank.textContent = "-- 豆を選択 --";
   beanSel.appendChild(blank);
+
   names.forEach(name => {
     const opt = document.createElement("option");
     opt.value = name;
