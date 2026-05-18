@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>豆リスト</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: monospace;
+  padding: 16px;
+  background: #f5f0eb;
+  color: #222;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+h2 { font-size: 1.2rem; margin: 0 0 16px; color: #5c3317; }
+
+label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 4px; }
+
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 12px;
+  font-family: monospace;
+  -webkit-appearance: none;
+}
+
+textarea { height: 80px; resize: none; }
+
+input:focus, textarea:focus { outline: none; border-color: #8B4513; }
+
+#saveBtn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 24px;
+  font-size: 1.1rem;
+  font-family: monospace;
+  font-weight: bold;
+  background: #5c3317;
+  color: #f5f0eb;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#saveBtn:active { opacity: 0.85; }
+
+.section-title {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #e0d8d0;
+  padding-bottom: 4px;
+}
+
+.bean-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border-bottom: 1px solid #f0ebe6;
+}
+
+.bean-item:last-child { border-bottom: none; }
+
+.bean-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.bean-name { font-size: 1rem; }
+
+.bean-memo {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sort-btn {
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  font-family: monospace;
+  border: none;
+  border-radius: 6px;
+  background: #e8e0d8;
+  color: #333;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.sort-btn:active { background: #d4c8bc; }
+.sort-btn:disabled { opacity: 0.3; cursor: default; }
+
+.delete-btn {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-family: monospace;
+  border: none;
+  border-radius: 6px;
+  background: #e8e0d8;
+  color: #333;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.delete-btn:active { background: #d4c8bc; }
+
+#emptyMsg {
+  color: #aaa;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 20px 0;
+}
+</style>
+</head>
+<body>
+
+<h2>豆リスト</h2>
+
+<div style="text-align:right;margin-bottom:12px;">
+  <a href="index.html" style="font-family:monospace;font-size:0.85rem;color:#5c3317;text-decoration:none;background:#e8e0d8;padding:6px 12px;border-radius:6px;">→ Menu</a>
+</div>
+
+<label>豆の名前</label>
+<input id="beanName" placeholder="例：エチオピア イルガチェフェ" autocomplete="off">
+
+<label>メモ</label>
+<textarea id="beanMemo" placeholder="例：フルーティ、酸味強め、挽目4が好み"></textarea>
+
+<button id="saveBtn" onclick="saveBean()">保存</button>
+
+<div class="section-title">登録済みの豆</div>
+<div id="beanList"></div>
+
+<script>
+const beanNameEl = document.getElementById("beanName");
+const beanMemoEl = document.getElementById("beanMemo");
+const beanList   = document.getElementById("beanList");
+
+/* 順序をlocalStorageで管理 */
+function getOrder() {
+  const raw = localStorage.getItem("master_order");
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveOrder(order) {
+  localStorage.setItem("master_order", JSON.stringify(order));
+}
+
+function getMasterBeans() {
+  const order = getOrder();
+  const all = Object.keys(localStorage)
+    .filter(k => k.startsWith("master_bean_"))
+    .map(k => k.substring(12));
+
+  // orderに含まれていない豆を末尾に追加
+  const missing = all.filter(n => !order.includes(n));
+  const merged  = [...order.filter(n => all.includes(n)), ...missing];
+  if (JSON.stringify(merged) !== JSON.stringify(order)) saveOrder(merged);
+  return merged;
+}
+
+function renderList() {
+  const names = getMasterBeans();
+  beanList.innerHTML = "";
+
+  if (names.length === 0) {
+    beanList.innerHTML = `<div id="emptyMsg">登録された豆はありません</div>`;
+    return;
+  }
+
+  names.forEach((name, idx) => {
+    const raw  = localStorage.getItem("master_bean_" + name);
+    const data = raw ? JSON.parse(raw) : {};
+    const memo = data.memo || "";
+
+    const item = document.createElement("div");
+    item.className = "bean-item";
+
+    /* 上ボタン */
+    const upBtn = document.createElement("button");
+    upBtn.className = "sort-btn";
+    upBtn.textContent = "↑";
+    upBtn.disabled = idx === 0;
+    upBtn.onclick = () => moveBean(idx, -1);
+
+    /* 下ボタン */
+    const downBtn = document.createElement("button");
+    downBtn.className = "sort-btn";
+    downBtn.textContent = "↓";
+    downBtn.disabled = idx === names.length - 1;
+    downBtn.onclick = () => moveBean(idx, 1);
+
+    /* 豆情報 */
+    const info = document.createElement("div");
+    info.className = "bean-info";
+    info.onclick = () => loadBean(name);
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "bean-name";
+    nameEl.textContent = name;
+    info.appendChild(nameEl);
+
+    if (memo) {
+      const memoEl = document.createElement("div");
+      memoEl.className = "bean-memo";
+      memoEl.textContent = memo;
+      info.appendChild(memoEl);
+    }
+
+    /* 削除ボタン */
+    const delBtn = document.createElement("button");
+    delBtn.className = "delete-btn";
+    delBtn.textContent = "削除";
+    delBtn.onclick = () => deleteBean(name);
+
+    item.appendChild(upBtn);
+    item.appendChild(downBtn);
+    item.appendChild(info);
+    item.appendChild(delBtn);
+    beanList.appendChild(item);
+  });
+}
+
+function moveBean(idx, dir) {
+  const order = getMasterBeans();
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= order.length) return;
+  [order[idx], order[newIdx]] = [order[newIdx], order[idx]];
+  saveOrder(order);
+  renderList();
+}
+
+function loadBean(name) {
+  const raw  = localStorage.getItem("master_bean_" + name);
+  const data = raw ? JSON.parse(raw) : {};
+  beanNameEl.value = name;
+  beanMemoEl.value = data.memo || "";
+}
+
+function saveBean() {
+  const name = beanNameEl.value.trim();
+  if (!name) { alert("豆の名前を入力してください"); return; }
+
+  const isNew = !localStorage.getItem("master_bean_" + name);
+  const data  = { memo: beanMemoEl.value.trim() };
+  localStorage.setItem("master_bean_" + name, JSON.stringify(data));
+
+  if (isNew) {
+    const order = getOrder();
+    order.push(name);
+    saveOrder(order);
+  }
+
+  beanNameEl.value = "";
+  beanMemoEl.value = "";
+  renderList();
+}
+
+function deleteBean(name) {
+  localStorage.removeItem("master_bean_" + name);
+  const order = getOrder().filter(n => n !== name);
+  saveOrder(order);
+  renderList();
+}
+
+window.addEventListener("DOMContentLoaded", renderList);
+</script>
+
+</body>
+</html>

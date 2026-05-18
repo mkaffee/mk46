@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Hoffmann V60 Brewer</title>
 <style>
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
   font-family: monospace;
@@ -18,18 +16,9 @@ body {
   margin: 0 auto;
 }
 
-h2 {
-  font-size: 1.2rem;
-  margin: 0 0 16px;
-  color: #5c3317;
-}
+h2 { font-size: 1.2rem; margin: 0 0 16px; color: #5c3317; }
 
-label {
-  display: block;
-  font-size: 0.8rem;
-  color: #666;
-  margin-bottom: 4px;
-}
+label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 4px; }
 
 input, select {
   width: 100%;
@@ -43,16 +32,9 @@ input, select {
   font-family: monospace;
 }
 
-input:focus, select:focus {
-  outline: none;
-  border-color: #8B4513;
-}
+input:focus, select:focus { outline: none; border-color: #8B4513; }
 
-.btn-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
+.btn-row { display: flex; gap: 8px; margin-bottom: 14px; }
 
 .btn-row button {
   flex: 1;
@@ -65,23 +47,13 @@ input:focus, select:focus {
   color: #333;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, color 0.2s;
 }
 
-.btn-row button:active {
-  background: #d4c8bc;
-}
+.btn-row button.active { background: #5c3317; color: #f5f0eb; }
+.btn-row button:active { opacity: 0.85; }
 
-.btn-row button.active {
-  background: #5c3317;
-  color: #f5f0eb;
-}
-
-/* 蒸らし倍率ボタン */
-.bloom-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
+.bloom-row { display: flex; gap: 8px; margin-top: 10px; }
 
 .bloom-row button {
   flex: 1;
@@ -97,23 +69,11 @@ input:focus, select:focus {
   transition: background 0.2s, color 0.2s;
 }
 
-.bloom-row button.selected {
-  background: #5c3317;
-  color: #f5f0eb;
-}
+.bloom-row button.selected { background: #5c3317; color: #f5f0eb; }
+.bloom-row button:active { opacity: 0.85; }
 
-.bloom-row button:active {
-  opacity: 0.85;
-}
-
-.input-row {
-  display: flex;
-  gap: 8px;
-}
-
-.input-row > div {
-  flex: 1;
-}
+.input-row { display: flex; gap: 8px; }
+.input-row > div { flex: 1; }
 
 #brewBtn {
   display: block;
@@ -133,14 +93,8 @@ input:focus, select:focus {
   -webkit-tap-highlight-color: transparent;
 }
 
-#brewBtn.brewed {
-  background: #5c3317;
-  color: #f5f0eb;
-}
-
-#brewBtn:active {
-  opacity: 0.85;
-}
+#brewBtn.brewed { background: #5c3317; color: #f5f0eb; }
+#brewBtn:active { opacity: 0.85; }
 
 #result {
   white-space: pre-wrap;
@@ -153,64 +107,6 @@ input:focus, select:focus {
   line-height: 1.7;
   overflow-x: hidden;
 }
-
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: #fff;
-  padding: 16px;
-  border-radius: 14px;
-  width: 88%;
-  max-width: 400px;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.modal-title {
-  font-size: 0.85rem;
-  color: #888;
-  margin-bottom: 8px;
-}
-
-.bean-item {
-  padding: 13px 8px;
-  border-bottom: 1px solid #f0ebe6;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.bean-item:last-child {
-  border-bottom: none;
-}
-
-.bean-item:active {
-  background: #f5f0eb;
-}
-
-.modal-footer {
-  margin-top: 10px;
-  display: flex;
-}
-
-.modal-footer button {
-  flex: 1;
-  padding: 13px;
-  font-size: 1rem;
-  font-family: monospace;
-  border: none;
-  border-radius: 8px;
-  background: #e8e0d8;
-  color: #333;
-  cursor: pointer;
-}
 </style>
 </head>
 <body>
@@ -218,19 +114,11 @@ input:focus, select:focus {
 <h2>Hoffmann V60 Brewer</h2>
 
 <div style="text-align:right;margin-bottom:12px;">
-  <a href="mk46.html" style="font-family:monospace;font-size:0.85rem;color:#5c3317;text-decoration:none;background:#e8e0d8;padding:6px 10px;border-radius:6px;">→ 4:6 Method</a>
-  &nbsp;
-  <a href="izaki.html" style="font-family:monospace;font-size:0.85rem;color:#5c3317;text-decoration:none;background:#e8e0d8;padding:6px 10px;border-radius:6px;">→ Izaki</a>
+  <a href="index.html" style="font-family:monospace;font-size:0.85rem;color:#5c3317;text-decoration:none;background:#e8e0d8;padding:6px 12px;border-radius:6px;">→ Menu</a>
 </div>
 
 <label>豆の名前</label>
-<input id="beanName" placeholder="例：エチオピア イルガチェフェ" autocomplete="off">
-
-<div class="btn-row">
-  <button onclick="openBeanModal('select')">豆リスト</button>
-  <button onclick="openBeanModal('delete')">削除</button>
-  <button onclick="clearAll()">クリア</button>
-</div>
+<select id="beanSel" onchange="onBeanSelect()"></select>
 
 <label>湯量</label>
 <div class="btn-row" id="waterRow">
@@ -256,12 +144,7 @@ input:focus, select:focus {
   </div>
   <div>
     <label>挽目</label>
-    <input
-  id="grind"
-  type="text"
-  inputmode="decimal"
-  enterkeyhint="done"
-  placeholder="例：3.5">
+    <input id="grind" type="text" inputmode="decimal" enterkeyhint="done" placeholder="例：3.0">
   </div>
 </div>
 
@@ -276,68 +159,73 @@ input:focus, select:focus {
 
 <div id="result"></div>
 
-<div id="beanModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title" id="beanModalTitle"></div>
-    <div id="beanModalList"></div>
-    <div class="modal-footer">
-      <button onclick="closeBeanModal()">キャンセル</button>
-    </div>
-  </div>
-</div>
-
 <script>
-const beanNameEl     = document.getElementById("beanName");
+const beanSel        = document.getElementById("beanSel");
 const finalEl        = document.getElementById("final");
 const ratioSel       = document.getElementById("ratioSel");
 const grindEl        = document.getElementById("grind");
 const resultEl       = document.getElementById("result");
 const brewBtn        = document.getElementById("brewBtn");
 const bloomRow       = document.getElementById("bloomRow");
-const beanModal      = document.getElementById("beanModal");
-const beanModalTitle = document.getElementById("beanModalTitle");
-const beanModalList  = document.getElementById("beanModalList");
 
-  /* 追加ここから */
-grindEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    grindEl.blur();
-    document.activeElement.blur();
-  }
-});
-/* 追加ここまで */
-  
 let bloomRatio = 3;
 
-function pad3(n) {
-  return String(n).padStart(3, " ");
-}
+function pad3(n) { return String(n).padStart(3, " "); }
+function setBrewed(on) { brewBtn.classList.toggle("brewed", on); }
 
-function setBrewed(on) {
-  brewBtn.classList.toggle("brewed", on);
-}
-
-/* -------------------------
-   蒸らし倍率ボタン
-------------------------- */
-function setBloom(v, btn) {
-  bloomRatio = v;
-  bloomRow.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-  btn.classList.add("selected");
-  setBrewed(false);
-}
-
-function applyBloom(v) {
-  bloomRatio = v;
-  bloomRow.querySelectorAll("button").forEach(b => {
-    b.classList.toggle("selected", parseFloat(b.textContent.replace("×","").trim()) === v);
+function buildBeanSelect(selectedName) {
+  const names = Object.keys(localStorage)
+    .filter(k => k.startsWith("master_bean_"))
+    .map(k => k.substring(12));
+  beanSel.innerHTML = "";
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "-- 豆を選択 --";
+  beanSel.appendChild(blank);
+  names.forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    if (name === selectedName) opt.selected = true;
+    beanSel.appendChild(opt);
   });
 }
 
-/* -------------------------
-   湯量ボタン
-------------------------- */
+function onBeanSelect() {
+  const name = beanSel.value;
+  if (!name) {
+    finalEl.removeAttribute("readonly");
+    finalEl.value = "";
+    grindEl.value = "";
+    ratioSel.value = 18;
+    applyWater(0);
+    applyBloom(3);
+    setBrewed(false);
+    resultEl.innerHTML = "";
+    return;
+  }
+  const raw = localStorage.getItem("hoff_bean_" + name);
+  if (raw) {
+    const data = JSON.parse(raw);
+    const val = Number(data.final);
+    finalEl.removeAttribute("readonly");
+    finalEl.value = data.final || "";
+    finalEl.setAttribute("readonly", true);
+    ratioSel.value = data.brewRatio || 18;
+    grindEl.value  = data.grind || "";
+    applyWater(val === 500 ? 500 : val === 250 ? 250 : 0);
+    applyBloom(data.bloom || 3);
+  } else {
+    finalEl.removeAttribute("readonly");
+    finalEl.value = "";
+    grindEl.value = "";
+    ratioSel.value = 18;
+    applyWater(0);
+    applyBloom(3);
+  }
+  setBrewed(false);
+}
+
 function setFinal(val) {
   finalEl.removeAttribute("readonly");
   finalEl.value = val;
@@ -364,101 +252,34 @@ function applyWater(v) {
   else document.getElementById("btnManual").classList.add("active");
 }
 
-/* -------------------------
-   起動時：lastBean 自動ロード
-------------------------- */
+function setBloom(v, btn) {
+  bloomRatio = v;
+  bloomRow.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  setBrewed(false);
+}
+
+function applyBloom(v) {
+  bloomRatio = v;
+  bloomRow.querySelectorAll("button").forEach(b => {
+    b.classList.toggle("selected", parseFloat(b.textContent.replace("×","").trim()) === v);
+  });
+}
+
+grindEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); grindEl.blur(); }
+});
+
 window.addEventListener("DOMContentLoaded", () => {
   const lastBean = localStorage.getItem("hoff_lastBean");
-  if (lastBean) loadBean(lastBean);
+  buildBeanSelect(lastBean || "");
+  if (lastBean) onBeanSelect();
 });
 
-let beanModalMode = "select";
-
-function openBeanModal(mode) {
-  beanModalMode = mode;
-  const keys  = Object.keys(localStorage).filter(k => k.startsWith("hoff_bean_"));
-  const names = keys.map(k => k.substring(10));
-  beanModalList.innerHTML = "";
-  if (names.length === 0) {
-    beanModalTitle.textContent = "保存された豆はありません";
-  } else {
-    beanModalTitle.textContent = (mode === "select") ? "豆を選んでください" : "削除する豆を選んでください";
-    names.forEach(name => {
-      const div = document.createElement("div");
-      div.textContent = name;
-      div.className = "bean-item";
-      div.onclick = () => {
-        if (beanModalMode === "select") {
-          loadBean(name);
-        } else {
-          deleteBean(name);
-        }
-        closeBeanModal();
-      };
-      beanModalList.appendChild(div);
-    });
-  }
-  beanModal.style.display = "flex";
-}
-
-function closeBeanModal() {
-  beanModal.style.display = "none";
-}
-
-beanModal.addEventListener("click", (e) => {
-  if (e.target === beanModal) closeBeanModal();
-});
-
-function loadBean(name) {
-  const raw = localStorage.getItem("hoff_bean_" + name);
-  if (!raw) return;
-  const data = JSON.parse(raw);
-  beanNameEl.value  = name;
-  const val = Number(data.final);
-  finalEl.removeAttribute("readonly");
-  finalEl.value = data.final;
-  finalEl.setAttribute("readonly", true);
-  applyWater(val === 500 ? 500 : val === 250 ? 250 : 0);
-  ratioSel.value = data.brewRatio || 18;
-  grindEl.value  = data.grind || "";
-  applyBloom(data.bloom || 3);
-  setBrewed(false);
-}
-
-function deleteBean(name) {
-  localStorage.removeItem("hoff_bean_" + name);
-  const lastBean = localStorage.getItem("hoff_lastBean");
-  if (lastBean === name) localStorage.removeItem("hoff_lastBean");
-  alert("削除しました: " + name);
-}
-
-function clearAll() {
-  beanNameEl.value = "";
-  finalEl.removeAttribute("readonly");
-  finalEl.value    = "";
-  grindEl.value    = "";
-  ratioSel.value   = 18;
-  resultEl.innerHTML = "";
-  document.querySelectorAll("#waterRow button").forEach(b => b.classList.remove("active"));
-  applyBloom(3);
-  setBrewed(false);
-}
-
-finalEl.addEventListener("input", () => {
-  setBrewed(false);
-});
-
-/* -------------------------
-   計算本体
-------------------------- */
 function calc() {
   const total     = Number(finalEl.value);
   const brewRatio = Number(ratioSel.value);
-
-  if (!total) {
-    resultEl.textContent = "湯量を入力してください。";
-    return;
-  }
+  if (!total) { resultEl.textContent = "湯量を入力してください。"; return; }
 
   const beans       = Math.floor(total / brewRatio);
   const bloom       = Math.round(beans * bloomRatio);
@@ -466,27 +287,26 @@ function calc() {
   const pour1       = pour1target - bloom;
   const pour2       = total - pour1target;
 
-  const name  = beanNameEl.value.trim();
+  const name  = beanSel.value;
   const grind = grindEl.value.trim();
 
   let lines = [];
-
   if (name) lines.push(`<strong>${name}</strong>`);
   lines.push(`<strong>豆量：${beans} g</strong>`);
   lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
   if (grind) lines.push(`挽目：${grind}`);
   lines.push("");
 
-  lines.push(`<strong>【蒸らし】　0:00〜0:45</strong>`);
+  lines.push(`<strong>── 蒸らし　0:00〜0:45 ──</strong>`);
   lines.push(`<strong> 注湯：${pad3(bloom)} g （累計 ${pad3(bloom)} g）</strong>`);
   lines.push(`<strong> → 即ゆする</strong>`);
   lines.push("");
 
-  lines.push(`<strong>【1投目】　0:45〜1:15</strong>`);
+  lines.push(`<strong>── 1投目　0:45〜1:15 ──</strong>`);
   lines.push(`<strong> 注湯：${pad3(pour1)} g （累計 ${pad3(pour1target)} g）</strong>`);
   lines.push("");
 
-  lines.push(`<strong>【2投目】　1:15〜1:45</strong>`);
+  lines.push(`<strong>── 2投目　1:15〜1:45 ──</strong>`);
   lines.push(`<strong> 注湯：${pad3(pour2)} g （累計 ${pad3(total)} g）</strong>`);
   lines.push(`<strong> → ゆする</strong>`);
   lines.push(`<strong> → お湯が半分落ちたら、ゆする</strong>`);
@@ -498,17 +318,12 @@ function calc() {
 
   resultEl.innerHTML = lines.join("\n");
   setBrewed(true);
-  setTimeout(() => {
-    resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 50);
+  setTimeout(() => { resultEl.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
   saveBean();
 }
 
-/* -------------------------
-   保存
-------------------------- */
 function saveBean() {
-  const name = beanNameEl.value.trim();
+  const name = beanSel.value;
   if (!name) return;
   const data = {
     final:     finalEl.value,
