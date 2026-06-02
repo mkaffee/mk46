@@ -298,14 +298,14 @@ function calc() {
 
   let lines = [];
   if (name) lines.push(`<strong>${name}</strong>`);
-  lines.push(`<strong>豆量：${beans} g　湯量：${total} g</strong>`);
+  lines.push(`<strong>豆量：${beans} g , 湯量：${total} g</strong>`);
   lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
   if (grind) lines.push(`挽目：${grind}`);
   lines.push("");
 
   lines.push(`<strong>── 蒸らし　0:00〜0:45 ──</strong>`);
   lines.push(`<strong> 注湯：${pad3(bloom)} g （累計 ${pad3(bloom)} g）</strong>`);
-  lines.push(`<strong> → 即ゆする</strong>`);
+  lines.push(`<strong> → ゆする</strong>`);
   lines.push("");
 
   lines.push(`<strong>── 1投目　0:45〜1:15 ──</strong>`);
@@ -318,8 +318,7 @@ function calc() {
   lines.push(`<strong> → お湯が半分落ちたら、ゆする</strong>`);
   lines.push("");
 
-  lines.push(`落ち切り目標：3:30`);
-  lines.push("");
+   lines.push("");
   lines.push("Hoffmann Ultimate V60 Technique");
 
   resultEl.innerHTML = lines.join("\n");
