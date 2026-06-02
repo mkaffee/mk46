@@ -251,14 +251,14 @@ function calc() {
 
   let lines = [];
   if (name) lines.push(`<strong>${name}</strong>`);
-  lines.push(`<strong>豆量：${beans} g　湯量：${total} g</strong>`);
+  lines.push(`<strong>豆量：${beans} g , 湯量：${total} g</strong>`);
   lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
   if (grind) lines.push(`挽目：${grind}`);
   lines.push("");
 
-  lines.push(`<strong>── 蒸らし　0:00〜0:15 ──</strong>`);
+  lines.push(`<strong>── 1投目　0:00〜1:00 ──</strong>`);
   lines.push(`<strong> 注湯：${pad3(pour1)} g （累計 ${pad3(pour1)} g）</strong>`);
-  lines.push(`<strong> → ゆすり撹拌（40秒待機）</strong>`);
+  lines.push(`<strong> → ゆすり撹拌</strong>`);
   lines.push("");
 
   lines.push(`<strong>── 2投目　1:00〜1:15 ──</strong>`);
