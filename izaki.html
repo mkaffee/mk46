@@ -256,22 +256,19 @@ function calc() {
   if (grind) lines.push(`挽目：${grind}`);
   lines.push("");
 
-  lines.push(`<strong>── 1投目　0:00〜1:00 ──</strong>`);
+  lines.push(`<strong>── 1投目 ──</strong>`);
   lines.push(`<strong> 注湯：${pad3(pour1)} g （累計 ${pad3(pour1)} g）</strong>`);
-  lines.push(`<strong> → ゆすり撹拌</strong>`);
+  lines.push(`<strong> → ゆする、蒸らしは1分</strong>`);
   lines.push("");
 
-  lines.push(`<strong>── 2投目　1:00〜1:15 ──</strong>`);
+  lines.push(`<strong>── 2投目 ──</strong>`);
   lines.push(`<strong> 注湯：${pad3(pour2)} g （累計 ${pad3(pour1 + pour2)} g）</strong>`);
   lines.push(`<strong>　（45秒待機）</strong>`);
   lines.push("");
 
-  lines.push(`<strong>── 3投目　2:00〜2:30 ──</strong>`);
+  lines.push(`<strong>── 3投目 ──</strong>`);
   lines.push(`<strong> 注湯：${pad3(pour3)} g （累計 ${pad3(total)} g）</strong>`);
-  lines.push(`<strong> → ゆすり撹拌</strong>`);
-  lines.push("");
-
-  lines.push(`落ち切り目標：3:00〜4:00`);
+  lines.push(`<strong> → ゆする</strong>`);
   lines.push("");
   lines.push("Izaki Method / Hidenori Izaki");
 
