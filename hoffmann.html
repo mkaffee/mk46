@@ -203,7 +203,7 @@ function onBeanSelect() {
     finalEl.removeAttribute("readonly");
     finalEl.value = "";
     grindEl.value = "";
-    ratioSel.value = 18;
+    ratioSel.value = 16;
     applyWater(0);
     applyBloom(3);
     setBrewed(false);
@@ -217,7 +217,7 @@ function onBeanSelect() {
     finalEl.removeAttribute("readonly");
     finalEl.value = data.final || "";
     finalEl.setAttribute("readonly", true);
-    ratioSel.value = data.brewRatio || 18;
+    ratioSel.value = data.brewRatio || 16;
     grindEl.value  = data.grind || "";
     applyWater(val === 500 ? 500 : val === 250 ? 250 : 0);
     applyBloom(data.bloom || 3);
@@ -225,7 +225,7 @@ function onBeanSelect() {
     finalEl.removeAttribute("readonly");
     finalEl.value = "";
     grindEl.value = "";
-    ratioSel.value = 18;
+    ratioSel.value = 16;
     applyWater(0);
     applyBloom(3);
   }
