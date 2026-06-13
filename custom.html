@@ -569,7 +569,7 @@ function calc() {
     lines.push(`<strong>── 注湯 ──</strong>`);
     lines.push(`<strong> ${pours[0]} g × ${n}回</strong>`);
     if (bloomTime !== "none") {
-      lines.push(`<strong> 1投目後　${bloomTime}秒待機</strong>`);
+      lines.push(`<strong> 1投目後 蒸らし ${bloomTime}秒</strong>`);
     }
     if (agitate.some(a => a)) {
       agitate.forEach((a, i) => {
