@@ -584,7 +584,7 @@ function calc() {
       cum += g;
       lines.push(`<strong> ${i+1}投：${pad3(g)} g （累計 ${pad3(cum)} g）</strong>`);
       if (i === 0 && bloomTime !== "none") {
-        lines.push(`<strong>　→ ${bloomTime}秒蒸らし</strong>`);
+        lines.push(`<strong>　→ 蒸らし ${bloomTime}秒</strong>`);
       }
       if (agitate[i]) {
         lines.push(`<strong>　→ ゆすり撹拌</strong>`);
