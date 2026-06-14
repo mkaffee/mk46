@@ -580,7 +580,7 @@ function calc() {
     }
     if (agitate.some(a => a)) {
       agitate.forEach((a, i) => {
-        if (a) lines.push(`<strong> ${i+1}投目後　→ ゆすり撹拌</strong>`);
+        if (a) lines.push(`<strong> ${i+1}投目後 → ゆすり撹拌</strong>`);
       });
     }
     lines.push(`<strong> 累計 ${pad3(total)} g</strong>`);
@@ -591,10 +591,10 @@ function calc() {
       cum += g;
       lines.push(`<strong> ${i+1}投：${pad3(g)} g （累計 ${pad3(cum)} g）</strong>`);
       if (i === 0 && bloomTime !== "none") {
-        lines.push(`<strong>　→ 蒸らし ${bloomTime}秒</strong>`);
+        lines.push(`<strong> → 蒸らし ${bloomTime}秒</strong>`);
       }
       if (agitate[i]) {
-        lines.push(`<strong>　→ ゆすり撹拌</strong>`);
+        lines.push(`<strong> → ゆすり撹拌</strong>`);
       }
     });
   }
