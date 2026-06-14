@@ -382,7 +382,8 @@ const saveArea   = document.getElementById("saveArea");
 let pourMode  = "even";
 let bloomTime = "none";
 let agitate   = [];
-
+let currentRecipeName = "";
+  
 function pad3(n) { return String(n).padStart(3, " "); }
 function setBrewed(on) { brewBtn.classList.toggle("brewed", on); }
 
@@ -472,7 +473,9 @@ function buildPourInputs() {
     inp.placeholder = Math.round(100 / n);
     inp.dataset.pour = i;
     inp.addEventListener("input", updateTotalPct);
-
+    inp.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); inp.blur(); }
+});
     const unit = document.createElement("span");
     unit.textContent = "%";
 
@@ -593,7 +596,7 @@ function calc() {
   }
 
   lines.push("");
-  lines.push("Custom Recipe");
+  lines.push(currentRecipeName || "Custom Recipe");
 
   resultEl.innerHTML = lines.join("\n");
   setBrewed(true);
@@ -627,6 +630,7 @@ function saveRecipe() {
 
 /* レシピ読み込み */
 function loadRecipe(name) {
+  currentRecipeName = name;
   const raw = localStorage.getItem("custom_recipe_" + name);
   if (!raw) return;
   const data = JSON.parse(raw);
