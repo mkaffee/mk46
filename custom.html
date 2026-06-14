@@ -72,7 +72,6 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
   margin-bottom: 8px;
 }
 
-/* 配分モードボタン */
 .mode-row {
   display: flex;
   gap: 8px;
@@ -95,7 +94,6 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
 .mode-row button.selected { background: #5c3317; color: #f5f0eb; }
 .mode-row button:active { opacity: 0.85; }
 
-/* カスタム%入力 */
 .pour-inputs { margin-bottom: 8px; }
 
 .pour-row {
@@ -133,7 +131,6 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
 #totalPct.ok { color: #5c3317; }
 #totalPct.ng { color: #c0392b; }
 
-/* 撹拌トグル */
 .agitate-row {
   display: flex;
   align-items: center;
@@ -163,7 +160,6 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
 .toggle-btn.on { background: #5c3317; color: #f5f0eb; }
 .toggle-btn:active { opacity: 0.85; }
 
-/* Brewボタン */
 #brewBtn {
   display: block;
   width: 100%;
@@ -185,7 +181,6 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
 #brewBtn.brewed { background: #5c3317; color: #f5f0eb; }
 #brewBtn:active { opacity: 0.85; }
 
-/* 結果 */
 #result {
   white-space: pre-wrap;
   margin-top: 18px;
@@ -198,7 +193,6 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
   overflow-x: hidden;
 }
 
-/* 保存エリア */
 .save-area {
   margin-top: 16px;
   padding-top: 12px;
@@ -231,34 +225,32 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
 
 .save-row button:active { opacity: 0.85; }
 
-/* 保存済みレシピ */
-.recipe-list { margin-top: 16px; }
-
-.recipe-item {
+/* 保存済みレシピ行 */
+.recipe-row {
   display: flex;
-  align-items: center;
   gap: 8px;
-  padding: 10px 6px;
-  border-bottom: 1px solid #f0ebe6;
-  cursor: pointer;
+  margin-bottom: 16px;
+  align-items: center;
 }
 
-.recipe-item:last-child { border-bottom: none; }
+.recipe-row select {
+  flex: 1;
+  margin: 0;
+}
 
-.recipe-name { flex: 1; font-size: 1rem; }
-
-.recipe-del {
-  padding: 6px 10px;
-  font-size: 0.85rem;
+.recipe-del-btn {
+  padding: 12px 14px;
+  font-size: 0.95rem;
   font-family: monospace;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #e8e0d8;
   color: #333;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
-.recipe-del:active { background: #d4c8bc; }
+.recipe-del-btn:active { background: #d4c8bc; }
 </style>
 </head>
 <body>
@@ -267,6 +259,13 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
 
 <div style="text-align:right;margin-bottom:12px;">
   <a href="index.html" style="font-family:monospace;font-size:0.85rem;color:#5c3317;text-decoration:none;background:#e8e0d8;padding:6px 12px;border-radius:6px;">→ Menu</a>
+</div>
+
+<!-- 保存済みレシピ -->
+<label>保存済みレシピ</label>
+<div class="recipe-row">
+  <select id="recipeSel" onchange="onRecipeSelect()"></select>
+  <button class="recipe-del-btn" onclick="deleteCurrentRecipe()">削除</button>
 </div>
 
 <!-- 基本設定 -->
@@ -326,7 +325,7 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
 
   <div id="customArea" style="display:none;">
     <div id="totalPct" class="ng">合計：0%</div>
-    <div class="pour-inputs" id="pourInputs"></div>    
+    <div class="pour-inputs" id="pourInputs"></div>
   </div>
 </div>
 
@@ -353,39 +352,77 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
 
 <!-- 保存エリア -->
 <div class="save-area" id="saveArea">
-  <div class="section-label">レシピを保存</div>
+  <div id="updateArea" style="display:none;margin-bottom:8px;">
+    <button id="updateBtn" onclick="updateRecipe()" style="width:100%;padding:10px;font-size:0.95rem;font-family:monospace;border:none;border-radius:8px;background:#8B4513;color:#f5f0eb;cursor:pointer;">更新</button>
+  </div>
+  <div class="section-label">新規保存</div>
   <div class="save-row">
-    <input id="recipeName" type="text" placeholder="レシピ名を入力">
+    <input id="recipeNameInput" type="text" placeholder="レシピ名を入力">
     <button onclick="saveRecipe()">保存</button>
   </div>
 </div>
 
-<!-- 保存済みレシピ -->
-<div class="recipe-list" id="recipeList"></div>
-
 <script>
-const beanSel    = document.getElementById("beanSel");
-const finalEl    = document.getElementById("final");
-const ratioSel   = document.getElementById("ratioSel");
-const grindEl    = document.getElementById("grind");
-const pourCount  = document.getElementById("pourCount");
-const brewBtn    = document.getElementById("brewBtn");
-const resultEl   = document.getElementById("result");
-const waterRow   = document.getElementById("waterRow");
-const bloomRow   = document.getElementById("bloomRow");
-const customArea = document.getElementById("customArea");
-const pourInputs = document.getElementById("pourInputs");
-const totalPct   = document.getElementById("totalPct");
-const agitateArea= document.getElementById("agitateArea");
-const saveArea   = document.getElementById("saveArea");
+const beanSel     = document.getElementById("beanSel");
+const recipeSel   = document.getElementById("recipeSel");
+const finalEl     = document.getElementById("final");
+const ratioSel    = document.getElementById("ratioSel");
+const grindEl     = document.getElementById("grind");
+const pourCount   = document.getElementById("pourCount");
+const brewBtn     = document.getElementById("brewBtn");
+const resultEl    = document.getElementById("result");
+const waterRow    = document.getElementById("waterRow");
+const bloomRow    = document.getElementById("bloomRow");
+const customArea  = document.getElementById("customArea");
+const pourInputs  = document.getElementById("pourInputs");
+const totalPct    = document.getElementById("totalPct");
+const agitateArea = document.getElementById("agitateArea");
+const saveArea    = document.getElementById("saveArea");
 
-let pourMode  = "even";
-let bloomTime = "none";
-let agitate   = [];
+let pourMode          = "even";
+let bloomTime         = "none";
+let agitate           = [];
 let currentRecipeName = "";
-  
+
 function pad3(n) { return String(n).padStart(3, " "); }
 function setBrewed(on) { brewBtn.classList.toggle("brewed", on); }
+
+/* 保存済みレシピドロップダウン */
+function buildRecipeSelect(selectedName) {
+  const keys  = Object.keys(localStorage).filter(k => k.startsWith("custom_recipe_"));
+  const names = keys.map(k => k.substring(14));
+
+  recipeSel.innerHTML = "";
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "-- レシピを選択 --";
+  recipeSel.appendChild(blank);
+
+  names.forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    if (name === selectedName) opt.selected = true;
+    recipeSel.appendChild(opt);
+  });
+}
+
+function onRecipeSelect() {
+  const name = recipeSel.value;
+  if (!name) return;
+  loadRecipe(name);
+}
+
+function deleteCurrentRecipe() {
+  const name = recipeSel.value;
+  if (!name) return;
+  localStorage.removeItem("custom_recipe_" + name);
+  currentRecipeName = "";
+  buildRecipeSelect("");
+  resultEl.innerHTML = "";
+  saveArea.style.display = "none";
+  setBrewed(false);
+}
 
 /* 豆ドロップダウン */
 function buildBeanSelect() {
@@ -471,24 +508,50 @@ function buildPourInputs() {
     inp.type = "number";
     inp.inputMode = "decimal";
     inp.dataset.pour = i;
-    inp.addEventListener("input", updateTotalPct);
     inp.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") { e.preventDefault(); inp.blur(); }
-});
+      if (e.key === "Enter") {
+        e.preventDefault();
+        inp.blur();
+        if (Number(inp.dataset.pour) === Number(pourCount.value)) {
+          document.getElementById("bloomRow").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    });
+
     const unit = document.createElement("span");
     unit.textContent = "%";
+
+    const gDisp = document.createElement("span");
+    gDisp.style.cssText = "font-size:0.85rem;color:#888;width:50px;text-align:right;flex-shrink:0;";
+    gDisp.dataset.gdisp = i;
+    gDisp.textContent = "-- g";
+
+    inp.addEventListener("input", () => {
+      updateTotalPct();
+      updateGDisp();
+    });
 
     row.appendChild(lbl);
     row.appendChild(inp);
     row.appendChild(unit);
+    row.appendChild(gDisp);
     pourInputs.appendChild(row);
   }
   updateTotalPct();
 }
 
+function updateGDisp() {
+  const total = Number(finalEl.value);
+  const inputs = pourInputs.querySelectorAll("input");
+  pourInputs.querySelectorAll("[data-gdisp]").forEach((el, i) => {
+    const pct = Number(inputs[i]?.value) || 0;
+    el.textContent = total ? `${Math.round(total * pct / 100)} g` : "-- g";
+  });
+}
+
 function updateTotalPct() {
   const inputs = pourInputs.querySelectorAll("input");
-  const sum = Array.from(inputs).reduce((a, b) => a + (Number(b.value) || 0), 0);
+  const sum    = Array.from(inputs).reduce((a, b) => a + (Number(b.value) || 0), 0);
   const remain = 100 - sum;
   if (sum === 100) {
     totalPct.textContent = `合計：${sum}%`;
@@ -531,7 +594,7 @@ grindEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); grindEl.blur(); }
 });
 
-finalEl.addEventListener("input", () => { setBrewed(false); });
+finalEl.addEventListener("input", () => { setBrewed(false); updateGDisp(); });
 
 /* 計算 */
 function calc() {
@@ -543,7 +606,6 @@ function calc() {
 
   const beans = Math.floor(total / brewRatio);
 
-  // 各投の湯量計算
   let pours = [];
   if (pourMode === "even") {
     for (let i = 0; i < n; i++) {
@@ -569,7 +631,7 @@ function calc() {
   if (name) lines.push(`<strong>${name}</strong>`);
   lines.push(`<strong>豆量：${beans} g　湯量：${total} g</strong>`);
   lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
-  if (grind) lines.push(`<strong>挽目：${grind}`);
+  if (grind) lines.push(`挽目：${grind}`);
   lines.push("");
 
   if (pourMode === "even") {
@@ -605,12 +667,33 @@ function calc() {
   resultEl.innerHTML = lines.join("\n");
   setBrewed(true);
   saveArea.style.display = "block";
+  document.getElementById("updateArea").style.display = currentRecipeName ? "block" : "none";
   resultEl.scrollIntoView({ behavior: "smooth" });
+}
+
+/* レシピ更新 */
+function updateRecipe() {
+  if (!currentRecipeName) return;
+  const data = {
+    bean:      beanSel.value,
+    final:     finalEl.value,
+    brewRatio: ratioSel.value,
+    grind:     grindEl.value.trim(),
+    pourCount: pourCount.value,
+    pourMode,
+    bloomTime,
+    agitate:   [...agitate],
+    customPct: pourMode === "custom"
+      ? Array.from(pourInputs.querySelectorAll("input")).map(i => i.value)
+      : []
+  };
+  localStorage.setItem("custom_recipe_" + currentRecipeName, JSON.stringify(data));
+  buildRecipeSelect(currentRecipeName);
 }
 
 /* レシピ保存 */
 function saveRecipe() {
-  const name = document.getElementById("recipeName").value.trim();
+  const name = document.getElementById("recipeNameInput").value.trim();
   if (!name) { alert("レシピ名を入力してください"); return; }
 
   const data = {
@@ -628,8 +711,9 @@ function saveRecipe() {
   };
 
   localStorage.setItem("custom_recipe_" + name, JSON.stringify(data));
-  document.getElementById("recipeName").value = "";
-  renderRecipeList();
+  document.getElementById("recipeNameInput").value = "";
+  currentRecipeName = name;
+  buildRecipeSelect(name);
 }
 
 /* レシピ読み込み */
@@ -639,11 +723,11 @@ function loadRecipe(name) {
   if (!raw) return;
   const data = JSON.parse(raw);
 
-  beanSel.value     = data.bean || "";
-  finalEl.value     = data.final || "";
-  ratioSel.value    = data.brewRatio || 15;
-  grindEl.value     = data.grind || "";
-  pourCount.value   = data.pourCount || 5;
+  beanSel.value   = data.bean || "";
+  finalEl.value   = data.final || "";
+  ratioSel.value  = data.brewRatio || 15;
+  grindEl.value   = data.grind || "";
+  pourCount.value = data.pourCount || 5;
 
   applyWater(Number(data.final) === 500 ? 500 : Number(data.final) === 250 ? 250 : 0);
   applyBloom(data.bloomTime || "none");
@@ -651,24 +735,21 @@ function loadRecipe(name) {
   buildPourInputs();
   buildAgitateToggles();
 
-  // 配分モード復元
   pourMode = data.pourMode || "even";
   document.querySelectorAll(".mode-row button").forEach(b => {
-    b.classList.toggle("selected", 
-      (b.id === "modeEven" && pourMode === "even") ||
+    b.classList.toggle("selected",
+      (b.id === "modeEven"   && pourMode === "even") ||
       (b.id === "modeCustom" && pourMode === "custom")
     );
   });
   customArea.style.display = pourMode === "custom" ? "block" : "none";
 
-  // カスタム%復元
   if (pourMode === "custom" && data.customPct) {
     const inputs = pourInputs.querySelectorAll("input");
     data.customPct.forEach((v, i) => { if (inputs[i]) inputs[i].value = v; });
     updateTotalPct();
   }
 
-  // 撹拌復元
   if (data.agitate) {
     agitate = [...data.agitate];
     agitateArea.querySelectorAll("button").forEach((btn, i) => {
@@ -682,51 +763,12 @@ function loadRecipe(name) {
   saveArea.style.display = "none";
 }
 
-/* レシピ削除 */
-function deleteRecipe(name) {
-  localStorage.removeItem("custom_recipe_" + name);
-  renderRecipeList();
-}
-
-/* 保存済みレシピ一覧 */
-function renderRecipeList() {
-  const keys  = Object.keys(localStorage).filter(k => k.startsWith("custom_recipe_"));
-  const names = keys.map(k => k.substring(14));
-  const list  = document.getElementById("recipeList");
-  list.innerHTML = "";
-  if (names.length === 0) return;
-
-  const title = document.createElement("div");
-  title.style.cssText = "font-size:0.8rem;color:#888;margin-top:16px;padding-top:12px;border-top:1px solid #e0d8d0;margin-bottom:8px;";
-  title.textContent = "保存済みレシピ";
-  list.appendChild(title);
-
-  names.forEach(name => {
-    const item = document.createElement("div");
-    item.className = "recipe-item";
-
-    const nameEl = document.createElement("div");
-    nameEl.className = "recipe-name";
-    nameEl.textContent = name;
-    nameEl.onclick = () => loadRecipe(name);
-
-    const delBtn = document.createElement("button");
-    delBtn.className = "recipe-del";
-    delBtn.textContent = "削除";
-    delBtn.onclick = () => deleteRecipe(name);
-
-    item.appendChild(nameEl);
-    item.appendChild(delBtn);
-    list.appendChild(item);
-  });
-}
-
 /* 初期化 */
 window.addEventListener("DOMContentLoaded", () => {
+  buildRecipeSelect("");
   buildBeanSelect();
   buildPourInputs();
   buildAgitateToggles();
-  renderRecipeList();
 });
 </script>
 
