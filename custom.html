@@ -470,7 +470,6 @@ function buildPourInputs() {
     const inp = document.createElement("input");
     inp.type = "number";
     inp.inputMode = "decimal";
-    inp.placeholder = Math.round(100 / n);
     inp.dataset.pour = i;
     inp.addEventListener("input", updateTotalPct);
     inp.addEventListener("keydown", (e) => {
@@ -490,7 +489,12 @@ function buildPourInputs() {
 function updateTotalPct() {
   const inputs = pourInputs.querySelectorAll("input");
   const sum = Array.from(inputs).reduce((a, b) => a + (Number(b.value) || 0), 0);
-  totalPct.textContent = `合計：${sum}%`;
+  const remain = 100 - sum;
+  if (sum === 100) {
+    totalPct.textContent = `合計：${sum}%`;
+  } else {
+    totalPct.textContent = `合計：${sum}%　残り：${remain}%`;
+  }
   totalPct.className = sum === 100 ? "ok" : "ng";
 }
 
