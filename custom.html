@@ -145,6 +145,18 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
   color: #444;
 }
 
+.agitate-row .agitate-memo {
+  flex: 1;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  font-family: monospace;
+  color: #333;
+}
+
 .toggle-btn {
   padding: 6px 14px;
   font-size: 0.85rem;
@@ -584,8 +596,16 @@ function buildAgitateToggles() {
       setBrewed(false);
     };
 
+    const memo = document.createElement("input");
+    memo.type = "text";
+    memo.className = "agitate-memo";
+    memo.placeholder = "メモ";
+    memo.dataset.memoIdx = i - 1;
+    memo.addEventListener("input", () => setBrewed(false));
+
     row.appendChild(lbl);
     row.appendChild(btn);
+    row.appendChild(memo);
     agitateArea.appendChild(row);
   }
 }
@@ -634,30 +654,19 @@ function calc() {
   if (grind) lines.push(`挽目：${grind}`);
   lines.push("");
 
-  if (pourMode === "even") {
-    lines.push(`<strong>── 注湯 ──</strong>`);
-    lines.push(`<strong> ${pours[0]} g × ${n}回</strong>`);
-    if (bloomTime !== "none") {
-      lines.push(`<strong> 1投目後 → 蒸らし ${bloomTime}秒</strong>`);
-    }
-    if (agitate.some(a => a)) {
-      agitate.forEach((a, i) => {
-        if (a) lines.push(`<strong> ${i+1}投目後 → ゆすり撹拌</strong>`);
-      });
-    }
-    lines.push(`<strong> 累計 ${pad3(total)} g</strong>`);
-  } else {
-    lines.push(`<strong>── 注湯 ──</strong>`);
+  lines.push(`<strong>── 注湯 ──</strong>`);
+  {
     let cum = 0;
+    const memoInputs = agitateArea.querySelectorAll(".agitate-memo");
     pours.forEach((g, i) => {
       cum += g;
       lines.push(`<strong> ${i+1}投：${pad3(g)} g （累計 ${pad3(cum)} g）</strong>`);
       if (i === 0 && bloomTime !== "none") {
         lines.push(`<strong> → 蒸らし ${bloomTime}秒</strong>`);
       }
-      if (agitate[i]) {
-        lines.push(`<strong> → ゆすり撹拌</strong>`);
-      }
+      const memo = memoInputs[i]?.value.trim() || "";
+      if (agitate[i]) lines.push(`<strong> → スピン撹拌${memo ? "　" + memo : ""}</strong>`);
+      else if (memo) lines.push(`<strong> → ${memo}</strong>`);
     });
   }
 
@@ -675,15 +684,16 @@ function calc() {
 function updateRecipe() {
   if (!currentRecipeName) return;
   const data = {
-    bean:      beanSel.value,
-    final:     finalEl.value,
-    brewRatio: ratioSel.value,
-    grind:     grindEl.value.trim(),
-    pourCount: pourCount.value,
+    bean:        beanSel.value,
+    final:       finalEl.value,
+    brewRatio:   ratioSel.value,
+    grind:       grindEl.value.trim(),
+    pourCount:   pourCount.value,
     pourMode,
     bloomTime,
-    agitate:   [...agitate],
-    customPct: pourMode === "custom"
+    agitate:     [...agitate],
+    agitateMemo: Array.from(agitateArea.querySelectorAll(".agitate-memo")).map(i => i.value),
+    customPct:   pourMode === "custom"
       ? Array.from(pourInputs.querySelectorAll("input")).map(i => i.value)
       : []
   };
@@ -697,15 +707,16 @@ function saveRecipe() {
   if (!name) { alert("レシピ名を入力してください"); return; }
 
   const data = {
-    bean:      beanSel.value,
-    final:     finalEl.value,
-    brewRatio: ratioSel.value,
-    grind:     grindEl.value.trim(),
-    pourCount: pourCount.value,
+    bean:        beanSel.value,
+    final:       finalEl.value,
+    brewRatio:   ratioSel.value,
+    grind:       grindEl.value.trim(),
+    pourCount:   pourCount.value,
     pourMode,
     bloomTime,
-    agitate:   [...agitate],
-    customPct: pourMode === "custom"
+    agitate:     [...agitate],
+    agitateMemo: Array.from(agitateArea.querySelectorAll(".agitate-memo")).map(i => i.value),
+    customPct:   pourMode === "custom"
       ? Array.from(pourInputs.querySelectorAll("input")).map(i => i.value)
       : []
   };
@@ -755,6 +766,12 @@ function loadRecipe(name) {
     agitateArea.querySelectorAll("button").forEach((btn, i) => {
       btn.classList.toggle("on", agitate[i]);
       btn.textContent = agitate[i] ? "あり" : "なし";
+    });
+  }
+
+  if (data.agitateMemo) {
+    agitateArea.querySelectorAll(".agitate-memo").forEach((inp, i) => {
+      inp.value = data.agitateMemo[i] || "";
     });
   }
 
