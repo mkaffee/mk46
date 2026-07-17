@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Hatakeyama Recipe Brewer</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: monospace;
+  padding: 16px;
+  background: #eff5f0;
+  color: #222;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+h2 { font-size: 1.2rem; margin: 0 0 16px; color: #5c3317; }
+
+label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 4px; }
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 12px;
+  -webkit-appearance: none;
+  font-family: monospace;
+}
+
+input:focus, select:focus { outline: none; border-color: #8B4513; }
+
+.btn-row { display: flex; gap: 8px; margin-bottom: 14px; }
+
+.btn-row button {
+  flex: 1;
+  padding: 11px 0;
+  font-size: 0.95rem;
+  font-family: monospace;
+  border: none;
+  border-radius: 8px;
+  background: #e8e0d8;
+  color: #333;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-row button.active { background: #5c3317; color: #f5f0eb; }
+.btn-row button:active { opacity: 0.85; }
+
+.input-row { display: flex; gap: 8px; }
+.input-row > div { flex: 1; }
+
+#brewBtn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin-top: 14px;
+  font-size: 1.3rem;
+  font-family: monospace;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  background: #e8e0d8;
+  color: #5c3317;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#brewBtn.brewed { background: #5c3317; color: #f5f0eb; }
+#brewBtn:active { opacity: 0.85; }
+
+#result {
+  white-space: pre-wrap;
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #d4c8bc;
+  background: #fff;
+  border-radius: 10px;
+  font-size: 1rem;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+</style>
+</head>
+<body>
+
+<h2>Hatakeyama Recipe Brewer</h2>
+
+<div style="text-align:right;margin-bottom:12px;">
+  <a href="index.html" style="font-family:monospace;font-size:0.85rem;color:#5c3317;text-decoration:none;background:#e8e0d8;padding:6px 12px;border-radius:6px;">→ Menu</a>
+</div>
+
+<label>豆の名前</label>
+<select id="beanSel" onchange="onBeanSelect()"></select>
+
+<label>湯量</label>
+<div class="btn-row" id="waterRow">
+  <button id="btn500" onclick="setFinal(500)">500 g</button>
+  <button id="btn250" onclick="setFinal(250)">250 g</button>
+  <button id="btnManual" onclick="setFinalManual()">手動</button>
+</div>
+
+<div class="input-row">
+  <div>
+    <label>湯量(g)</label>
+    <input id="final" type="number" placeholder="例：500" readonly>
+  </div>
+  <div>
+    <label>抽出率</label>
+    <select id="ratioSel">
+      <option value="15">1:15</option>
+      <option value="16" selected>1:16</option>
+      <option value="17">1:17</option>
+      <option value="18">1:18</option>
+      <option value="19">1:19</option>
+    </select>
+  </div>
+  <div>
+    <label>挽目</label>
+    <input id="grind" type="text" inputmode="decimal" enterkeyhint="done" placeholder="例：3.5">
+  </div>
+</div>
+
+<label style="margin-top:4px;">蒸らし時間</label>
+<div class="btn-row" id="bloomRow">
+  <button onclick="setBloom(30, this)" class="active">30秒</button>
+  <button onclick="setBloom(45, this)">45秒</button>
+  <button onclick="setBloom(60, this)">60秒</button>
+</div>
+
+<button id="brewBtn" onclick="calc()">Brew</button>
+
+<div id="result"></div>
+
+<script>
+const beanSel  = document.getElementById("beanSel");
+const finalEl  = document.getElementById("final");
+const ratioSel = document.getElementById("ratioSel");
+const grindEl  = document.getElementById("grind");
+const resultEl = document.getElementById("result");
+const brewBtn  = document.getElementById("brewBtn");
+const bloomRow = document.getElementById("bloomRow");
+
+let bloomTime = 30;
+
+function pad3(n) { return String(n).padStart(3, " "); }
+function setBrewed(on) { brewBtn.classList.toggle("brewed", on); }
+
+function buildBeanSelect(selectedName) {
+  const orderRaw = localStorage.getItem("master_order");
+  const order    = orderRaw ? JSON.parse(orderRaw) : [];
+  const all      = Object.keys(localStorage)
+    .filter(k => k.startsWith("master_bean_"))
+    .map(k => k.substring(12));
+  const missing  = all.filter(n => !order.includes(n));
+  const names    = [...order.filter(n => all.includes(n)), ...missing];
+
+  beanSel.innerHTML = "";
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "-- 豆を選択 --";
+  beanSel.appendChild(blank);
+
+  names.forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    if (name === selectedName) opt.selected = true;
+    beanSel.appendChild(opt);
+  });
+}
+
+function onBeanSelect() {
+  const name = beanSel.value;
+  if (!name) {
+    finalEl.removeAttribute("readonly");
+    finalEl.value = "";
+    grindEl.value = "";
+    ratioSel.value = 16;
+    applyWater(0);
+    applyBloom(30);
+    setBrewed(false);
+    resultEl.innerHTML = "";
+    return;
+  }
+  const raw = localStorage.getItem("hata_bean_" + name);
+  if (raw) {
+    const data = JSON.parse(raw);
+    const val = Number(data.final);
+    finalEl.removeAttribute("readonly");
+    finalEl.value = data.final || "";
+    finalEl.setAttribute("readonly", true);
+    ratioSel.value = data.brewRatio || 16;
+    grindEl.value  = data.grind || "";
+    applyWater(val === 500 ? 500 : val === 250 ? 250 : 0);
+    applyBloom(data.bloom || 30);
+  } else {
+    finalEl.removeAttribute("readonly");
+    finalEl.value = "";
+    grindEl.value = "";
+    ratioSel.value = 16;
+    applyWater(0);
+    applyBloom(30);
+  }
+  setBrewed(false);
+}
+
+function setFinal(val) {
+  finalEl.removeAttribute("readonly");
+  finalEl.value = val;
+  finalEl.setAttribute("readonly", true);
+  setBrewed(false);
+  document.querySelectorAll("#waterRow button").forEach(b => b.classList.remove("active"));
+  if (val === 500) document.getElementById("btn500").classList.add("active");
+  if (val === 250) document.getElementById("btn250").classList.add("active");
+}
+
+function setFinalManual() {
+  finalEl.removeAttribute("readonly");
+  finalEl.value = "";
+  setBrewed(false);
+  document.querySelectorAll("#waterRow button").forEach(b => b.classList.remove("active"));
+  document.getElementById("btnManual").classList.add("active");
+  finalEl.focus();
+}
+
+function applyWater(v) {
+  document.querySelectorAll("#waterRow button").forEach(b => b.classList.remove("active"));
+  if (v === 500) document.getElementById("btn500").classList.add("active");
+  else if (v === 250) document.getElementById("btn250").classList.add("active");
+  else document.getElementById("btnManual").classList.add("active");
+}
+
+function setBloom(v, btn) {
+  bloomTime = v;
+  bloomRow.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  setBrewed(false);
+}
+
+function applyBloom(v) {
+  bloomTime = v;
+  bloomRow.querySelectorAll("button").forEach(b => {
+    b.classList.toggle("active", parseInt(b.textContent) === v);
+  });
+}
+
+grindEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); grindEl.blur(); }
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  const lastBean = localStorage.getItem("hata_lastBean");
+  buildBeanSelect(lastBean || "");
+  if (lastBean) onBeanSelect();
+});
+
+function calc() {
+  const total     = Number(finalEl.value);
+  const brewRatio = Number(ratioSel.value);
+  if (!total) { resultEl.textContent = "湯量を入力してください。"; return; }
+
+  const beans = Math.floor(total / brewRatio);
+
+  // 比率：13/39/13/17/17（画像数値基準）、端数は最終投で吸収
+  const ratios = [0.13, 0.39, 0.13, 0.17, 0.17];
+  let cum = 0;
+  const pours = ratios.map((r, i) => {
+    if (i === ratios.length - 1) return total - cum;
+    const g = Math.round(total * r);
+    cum += g;
+    return g;
+  });
+
+  const name  = beanSel.value;
+  const grind = grindEl.value.trim();
+
+  const instructions = [
+    "全体に行き渡らせる",
+    "中心から円を描くように",
+    "壁の粉をそぎ落とすように",
+    "中心に",
+    "中心に"
+  ];
+
+  let lines = [];
+  if (name) lines.push(`<strong>${name}</strong>`);
+  lines.push(`<strong>豆量：${beans} g　湯量：${total} g</strong>`);
+  lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
+  if (grind) lines.push(`挽目：${grind}`);
+  lines.push("");
+
+  lines.push(`<strong>── 注湯 ──</strong>`);
+  let cumDisp = 0;
+  pours.forEach((g, i) => {
+    cumDisp += g;
+    lines.push(`<strong> ${i+1}投：${pad3(g)} g （累計 ${pad3(cumDisp)} g）</strong>`);
+    lines.push(`<strong> → ${instructions[i]}</strong>`);
+    if (i === 0) lines.push(`<strong> → 蒸らし ${bloomTime}秒</strong>`);
+  });
+
+  lines.push("");
+  lines.push(`<strong>── 仕上げ ──</strong>`);
+  lines.push(`<strong> 粉の表面が見えたらドリッパーを外す</strong>`);
+  lines.push(`<strong> → サーバー内をスプーンで撹拌</strong>`);
+  lines.push("");
+  lines.push("Hatakeyama Recipe / Daiki Hatakeyama");
+
+  resultEl.innerHTML = lines.join("\n");
+  setBrewed(true);
+  setTimeout(() => { resultEl.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
+  saveBean();
+}
+
+function saveBean() {
+  const name = beanSel.value;
+  if (!name) return;
+  const data = {
+    final:     finalEl.value,
+    brewRatio: ratioSel.value,
+    grind:     grindEl.value.trim(),
+    bloom:     bloomTime
+  };
+  localStorage.setItem("hata_bean_" + name, JSON.stringify(data));
+  localStorage.setItem("hata_lastBean", name);
+}
+</script>
+
+</body>
+</html>
