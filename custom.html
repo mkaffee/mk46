@@ -397,6 +397,7 @@ let agitate           = [];
 let currentRecipeName = "";
 
 function pad3(n) { return String(n).padStart(3, " "); }
+function escapeHtml(s) { return s.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;"); }
 function setBrewed(on) { brewBtn.classList.toggle("brewed", on); }
 
 /* 保存済みレシピドロップダウン */
@@ -648,7 +649,7 @@ function calc() {
   const grind = grindEl.value.trim();
 
   let lines = [];
-  if (name) lines.push(`<strong>${name}</strong>`);
+  if (name) lines.push(`<strong>${escapeHtml(name)}</strong>`);
   lines.push(`<strong>豆量：${beans} g　湯量：${total} g</strong>`);
   lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
   if (grind) lines.push(`挽目：${grind}`);

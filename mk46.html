@@ -134,7 +134,7 @@ input:focus, select:focus {
 
 #result {
   white-space: pre-wrap;
-  margin-top: px;
+  margin-top: 18px;
   padding: 14px;
   border: 1px solid #d4c8bc;
   background: #fff;
@@ -217,6 +217,7 @@ let bloomRatio = 3;
 let splitCount = 2;
 
 function pad3(n) { return String(n).padStart(3, " "); }
+function escapeHtml(s) { return s.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;"); }
 
 function setBrewed(on) { brewBtn.classList.toggle("brewed", on); }
 
@@ -258,7 +259,7 @@ function onBeanSelect() {
     resultEl.innerHTML = "";
     return;
   }
-  const raw = localStorage.getItem("bean_" + name);
+  const raw = localStorage.getItem("46_bean_" + name);
   if (raw) {
     const data = JSON.parse(raw);
     finalEl.value    = data.final || "";
@@ -336,7 +337,7 @@ finalEl.addEventListener("input", () => {
 
 /* 起動時 */
 window.addEventListener("DOMContentLoaded", () => {
-  const lastBean = localStorage.getItem("lastBean");
+  const lastBean = localStorage.getItem("46_lastBean");
   buildBeanSelect(lastBean || "");
   if (lastBean) onBeanSelect();
 });
@@ -358,7 +359,7 @@ function calc() {
   const grind = grindEl.value.trim();
 
   let lines = [];
-  if (name) lines.push(`<strong>${name}</strong>`);
+  if (name) lines.push(`<strong>${escapeHtml(name)}</strong>`);
   lines.push(`<strong>豆量：${beans} g , 湯量：${total} g</strong>`);
   lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
   if (grind) lines.push(`挽目：${grind}`);
@@ -396,8 +397,8 @@ function saveBean() {
     bloom:     bloomRatio,
     split:     splitCount
   };
-  localStorage.setItem("bean_" + name, JSON.stringify(data));
-  localStorage.setItem("lastBean", name);
+  localStorage.setItem("46_bean_" + name, JSON.stringify(data));
+  localStorage.setItem("46_lastBean", name);
 }
 </script>
 

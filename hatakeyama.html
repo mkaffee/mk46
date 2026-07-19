@@ -152,6 +152,7 @@ const bloomRow = document.getElementById("bloomRow");
 let bloomTime = 30;
 
 function pad3(n) { return String(n).padStart(3, " "); }
+function escapeHtml(s) { return s.replace('&',"&amp;").replace('<',"&lt;").replace('>',"&gt;"); }
 function setBrewed(on) { brewBtn.classList.toggle("brewed", on); }
 
 function buildBeanSelect(selectedName) {
@@ -292,7 +293,7 @@ function calc() {
   ];
 
   let lines = [];
-  if (name) lines.push(`<strong>${name}</strong>`);
+  if (name) lines.push(`<strong>${escapeHtml(name)}</strong>`);
   lines.push(`<strong>豆量：${beans} g　湯量：${total} g</strong>`);
   lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
   if (grind) lines.push(`挽目：${grind}`);
