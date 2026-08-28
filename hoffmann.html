@@ -130,7 +130,7 @@ input:focus, select:focus { outline: none; border-color: #8B4513; }
 <div class="input-row">
   <div>
     <label>湯量(g)</label>
-    <input id="final" type="number" placeholder="例：500" readonly>
+    <input id="final" type="number" placeholder="例：500" readonly enterkeyhint="done">
   </div>
   <div>
     <label>抽出率</label>
@@ -190,6 +190,9 @@ function buildBeanSelect(selectedName) {
   beanSel.appendChild(blank);
 
   names.forEach(name => {
+    const beanRaw = localStorage.getItem("master_bean_" + name);
+    const beanData = beanRaw ? JSON.parse(beanRaw) : {};
+    if (beanData.hidden) return;
     const opt = document.createElement("option");
     opt.value = name;
     opt.textContent = name;
@@ -275,6 +278,9 @@ function applyBloom(v) {
 
 grindEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); grindEl.blur(); }
+});
+finalEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); finalEl.blur(); }
 });
 
 window.addEventListener("DOMContentLoaded", () => {

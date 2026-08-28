@@ -61,25 +61,32 @@ input:focus, textarea:focus { outline: none; border-color: #8B4513; }
   padding-bottom: 4px;
 }
 
+/* 豆アイテム本体 */
 .bean-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 6px;
   border-bottom: 1px solid #f0ebe6;
 }
 
 .bean-item:last-child { border-bottom: none; }
 
-.bean-info {
-  flex: 1;
-  min-width: 0;
+/* 通常行：豆名タップで展開 */
+.bean-main {
+  display: flex;
+  align-items: center;
+  padding: 12px 6px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.bean-name { font-size: 1rem; }
+.bean-main.hidden-bean {
+  opacity: 0.4;
+}
 
-.bean-memo {
+.bean-name {
+  flex: 1;
+  font-size: 1rem;
+}
+
+.bean-memo-preview {
   font-size: 0.75rem;
   color: #888;
   margin-top: 2px;
@@ -88,35 +95,38 @@ input:focus, textarea:focus { outline: none; border-color: #8B4513; }
   text-overflow: ellipsis;
 }
 
-.sort-btn {
-  padding: 6px 8px;
-  font-size: 0.9rem;
+/* 詳細行（展開時） */
+.bean-detail {
+  display: none;
+  padding: 6px 6px 12px;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.bean-detail.open {
+  display: flex;
+}
+
+.detail-btn {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 0.95rem;
   font-family: monospace;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #e8e0d8;
   color: #333;
   cursor: pointer;
-  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
   line-height: 1;
 }
 
-.sort-btn:active { background: #d4c8bc; }
-.sort-btn:disabled { opacity: 0.3; cursor: default; }
+.detail-btn:active { background: #d4c8bc; }
+.detail-btn:disabled { opacity: 0.3; cursor: default; }
 
-.delete-btn {
-  padding: 6px 10px;
-  font-size: 0.85rem;
-  font-family: monospace;
-  border: none;
-  border-radius: 6px;
-  background: #e8e0d8;
-  color: #333;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.delete-btn:active { background: #d4c8bc; }
+.detail-btn.hide-btn       { color: #888; }
+.detail-btn.hide-btn.on    { background: #5c3317; color: #f5f0eb; }
+.detail-btn.delete-btn     { color: #c0392b; }
 
 #emptyMsg {
   color: #aaa;
@@ -135,7 +145,7 @@ input:focus, textarea:focus { outline: none; border-color: #8B4513; }
 </div>
 
 <label>豆の名前</label>
-<input id="beanName" placeholder="例：エチオピア イルガチェフェ" autocomplete="off">
+<input id="beanName" placeholder="例：エチオピア イルガチェフェ" autocomplete="off" enterkeyhint="done">
 
 <label>メモ</label>
 <textarea id="beanMemo" placeholder="例：フルーティ、酸味強め、挽目4が好み"></textarea>
@@ -150,7 +160,8 @@ const beanNameEl = document.getElementById("beanName");
 const beanMemoEl = document.getElementById("beanMemo");
 const beanList   = document.getElementById("beanList");
 
-/* 順序をlocalStorageで管理 */
+let openName = null; // 現在展開中の豆名
+
 function getOrder() {
   const raw = localStorage.getItem("master_order");
   return raw ? JSON.parse(raw) : [];
@@ -165,12 +176,15 @@ function getMasterBeans() {
   const all = Object.keys(localStorage)
     .filter(k => k.startsWith("master_bean_"))
     .map(k => k.substring(12));
-
-  // orderに含まれていない豆を末尾に追加
   const missing = all.filter(n => !order.includes(n));
   const merged  = [...order.filter(n => all.includes(n)), ...missing];
   if (JSON.stringify(merged) !== JSON.stringify(order)) saveOrder(merged);
   return merged;
+}
+
+function getBeanData(name) {
+  const raw = localStorage.getItem("master_bean_" + name);
+  return raw ? JSON.parse(raw) : {};
 }
 
 function renderList() {
@@ -183,60 +197,80 @@ function renderList() {
   }
 
   names.forEach((name, idx) => {
-    const raw  = localStorage.getItem("master_bean_" + name);
-    const data = raw ? JSON.parse(raw) : {};
-    const memo = data.memo || "";
+    const data   = getBeanData(name);
+    const memo   = data.memo || "";
+    const hidden = !!data.hidden;
 
     const item = document.createElement("div");
     item.className = "bean-item";
 
-    /* 上ボタン */
-    const upBtn = document.createElement("button");
-    upBtn.className = "sort-btn";
-    upBtn.textContent = "↑";
-    upBtn.disabled = idx === 0;
-    upBtn.onclick = () => moveBean(idx, -1);
-
-    /* 下ボタン */
-    const downBtn = document.createElement("button");
-    downBtn.className = "sort-btn";
-    downBtn.textContent = "↓";
-    downBtn.disabled = idx === names.length - 1;
-    downBtn.onclick = () => moveBean(idx, 1);
-
-    /* 豆情報 */
-    const info = document.createElement("div");
-    info.className = "bean-info";
-    info.onclick = () => loadBean(name);
+    /* 通常行 */
+    const main = document.createElement("div");
+    main.className = "bean-main" + (hidden ? " hidden-bean" : "");
+    main.onclick = () => toggleDetail(name);
 
     const nameEl = document.createElement("div");
     nameEl.className = "bean-name";
     nameEl.textContent = name;
-    info.appendChild(nameEl);
+    main.appendChild(nameEl);
 
     if (memo) {
       const memoEl = document.createElement("div");
-      memoEl.className = "bean-memo";
+      memoEl.className = "bean-memo-preview";
       memoEl.textContent = memo;
-      info.appendChild(memoEl);
+      main.appendChild(memoEl);
     }
+
+    /* 詳細行 */
+    const detail = document.createElement("div");
+    detail.className = "bean-detail" + (openName === name ? " open" : "");
+    detail.dataset.name = name;
+
+    /* ↑ボタン */
+    const upBtn = document.createElement("button");
+    upBtn.className = "detail-btn";
+    upBtn.textContent = "↑";
+    upBtn.disabled = idx === 0 || (idx > 0 && getBeanData(names[idx-1]).hidden && !hidden);
+    upBtn.onclick = (e) => { e.stopPropagation(); moveBean(idx, -1); };
+
+    /* ↓ボタン */
+    const downBtn = document.createElement("button");
+    downBtn.className = "detail-btn";
+    downBtn.textContent = "↓";
+    downBtn.disabled = idx === names.length - 1 || (hidden && !getBeanData(names[idx+1])?.hidden);
+    downBtn.onclick = (e) => { e.stopPropagation(); moveBean(idx, 1); };
+
+    /* 非表示ボタン */
+    const hideBtn = document.createElement("button");
+    hideBtn.className = "detail-btn hide-btn" + (hidden ? " on" : "");
+    hideBtn.textContent = hidden ? "表示" : "非表示";
+    hideBtn.title = hidden ? "表示に戻す" : "非表示";
+    hideBtn.onclick = (e) => { e.stopPropagation(); toggleHidden(name, hidden); };
 
     /* 削除ボタン */
     const delBtn = document.createElement("button");
-    delBtn.className = "delete-btn";
+    delBtn.className = "detail-btn delete-btn";
     delBtn.textContent = "削除";
-    delBtn.onclick = () => deleteBean(name);
+    delBtn.onclick = (e) => { e.stopPropagation(); deleteBean(name); };
 
-    item.appendChild(upBtn);
-    item.appendChild(downBtn);
-    item.appendChild(info);
-    item.appendChild(delBtn);
+    detail.appendChild(upBtn);
+    detail.appendChild(downBtn);
+    detail.appendChild(hideBtn);
+    detail.appendChild(delBtn);
+
+    item.appendChild(main);
+    item.appendChild(detail);
     beanList.appendChild(item);
   });
 }
 
+function toggleDetail(name) {
+  openName = (openName === name) ? null : name;
+  renderList();
+}
+
 function moveBean(idx, dir) {
-  const order = getMasterBeans();
+  const order  = getMasterBeans();
   const newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= order.length) return;
   [order[idx], order[newIdx]] = [order[newIdx], order[idx]];
@@ -244,24 +278,36 @@ function moveBean(idx, dir) {
   renderList();
 }
 
-function loadBean(name) {
-  const raw  = localStorage.getItem("master_bean_" + name);
-  const data = raw ? JSON.parse(raw) : {};
-  beanNameEl.value = name;
-  beanMemoEl.value = data.memo || "";
+function toggleHidden(name, currentHidden) {
+  const data = getBeanData(name);
+  data.hidden = !currentHidden;
+  localStorage.setItem("master_bean_" + name, JSON.stringify(data));
+
+  if (!currentHidden) {
+    // 非表示にする → 最後尾に移動
+    const order = getMasterBeans().filter(n => n !== name);
+    order.push(name);
+    saveOrder(order);
+    openName = null;
+  }
+  renderList();
 }
 
 function saveBean() {
   const name = beanNameEl.value.trim();
   if (!name) { alert("豆の名前を入力してください"); return; }
 
+  const existing = getBeanData(name);
+  const data = {
+    memo:   beanMemoEl.value.trim(),
+    hidden: existing.hidden || false
+  };
   const isNew = !localStorage.getItem("master_bean_" + name);
-  const data  = { memo: beanMemoEl.value.trim() };
   localStorage.setItem("master_bean_" + name, JSON.stringify(data));
 
   if (isNew) {
     const order = getOrder();
-    order.push(name);
+    order.unshift(name);
     saveOrder(order);
   }
 
@@ -274,10 +320,16 @@ function deleteBean(name) {
   localStorage.removeItem("master_bean_" + name);
   const order = getOrder().filter(n => n !== name);
   saveOrder(order);
+  if (openName === name) openName = null;
   renderList();
 }
 
-window.addEventListener("DOMContentLoaded", renderList);
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("beanName").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); e.target.blur(); }
+  });
+  renderList();
+});
 </script>
 
 </body>
