@@ -302,7 +302,7 @@ function calc() {
   if (name) lines.push(`<strong>${escapeHtml(name)}</strong>`);
   lines.push(`<strong>豆量：${beans} g　湯量：${total} g</strong>`);
   lines.push(`<strong>Brew Ratio >> 1:${brewRatio}</strong>`);
-  if (grind) lines.push(`挽目：${grind}`);
+  if (grind) lines.push(`<strong>挽目：${grind}`);
   lines.push("");
 
   lines.push(`<strong>── 注湯 ──</strong>`);
@@ -314,12 +314,12 @@ function calc() {
     if (i === 0) lines.push(`<strong> → 蒸らし ${bloomTime}秒</strong>`);
   });
 
+  //lines.push("");
+  //lines.push(`<strong>── 仕上げ ──</strong>`);
+  //lines.push(`<strong> 粉の表面が見えたらドリッパーを外す</strong>`);
+  //lines.push(`<strong> → サーバー内をスプーンで撹拌</strong>`);
   lines.push("");
-  lines.push(`<strong>── 仕上げ ──</strong>`);
-  lines.push(`<strong> 粉の表面が見えたらドリッパーを外す</strong>`);
-  lines.push(`<strong> → サーバー内をスプーンで撹拌</strong>`);
-  lines.push("");
-  lines.push("Hatakeyama Recipe / Daiki Hatakeyama");
+  lines.push("Hatakeyama Daiki Recipe");
 
   resultEl.innerHTML = lines.join("\n");
   setBrewed(true);
