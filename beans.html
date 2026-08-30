@@ -61,30 +61,29 @@ input:focus, textarea:focus { outline: none; border-color: #8B4513; }
   padding-bottom: 4px;
 }
 
-/* 豆アイテム本体 */
 .bean-item {
   border-bottom: 1px solid #f0ebe6;
 }
 
 .bean-item:last-child { border-bottom: none; }
 
-/* 通常行：豆名タップで展開 */
+/* 通常行 */
 .bean-main {
   display: flex;
   align-items: center;
   padding: 12px 6px;
+}
+
+.bean-main.hidden-bean { opacity: 0.4; }
+
+.bean-info {
+  flex: 1;
+  min-width: 0;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.bean-main.hidden-bean {
-  opacity: 0.4;
-}
-
-.bean-name {
-  flex: 1;
-  font-size: 1rem;
-}
+.bean-name { font-size: 1rem; }
 
 .bean-memo-preview {
   font-size: 0.75rem;
@@ -95,17 +94,30 @@ input:focus, textarea:focus { outline: none; border-color: #8B4513; }
   text-overflow: ellipsis;
 }
 
-/* 詳細行（展開時） */
+.toggle-btn {
+  padding: 8px 12px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #e8e0d8;
+  color: #555;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-btn.open { transform: rotate(90deg); }
+.toggle-btn:active { opacity: 0.7; }
+
+/* 詳細行 */
 .bean-detail {
   display: none;
   padding: 6px 6px 12px;
   gap: 8px;
-  justify-content: flex-start;
 }
 
-.bean-detail.open {
-  display: flex;
-}
+.bean-detail.open { display: flex; }
 
 .detail-btn {
   flex: 1;
@@ -124,9 +136,9 @@ input:focus, textarea:focus { outline: none; border-color: #8B4513; }
 .detail-btn:active { background: #d4c8bc; }
 .detail-btn:disabled { opacity: 0.3; cursor: default; }
 
-.detail-btn.hide-btn       { color: #888; }
-.detail-btn.hide-btn.on    { background: #5c3317; color: #f5f0eb; }
-.detail-btn.delete-btn     { color: #c0392b; }
+.detail-btn.hide-btn     { color: #888; }
+.detail-btn.hide-btn.on  { background: #5c3317; color: #f5f0eb; }
+.detail-btn.delete-btn   { color: #c0392b; }
 
 #emptyMsg {
   color: #aaa;
@@ -160,7 +172,7 @@ const beanNameEl = document.getElementById("beanName");
 const beanMemoEl = document.getElementById("beanMemo");
 const beanList   = document.getElementById("beanList");
 
-let openName = null; // 現在展開中の豆名
+let openName = null;
 
 function getOrder() {
   const raw = localStorage.getItem("master_order");
@@ -207,51 +219,58 @@ function renderList() {
     /* 通常行 */
     const main = document.createElement("div");
     main.className = "bean-main" + (hidden ? " hidden-bean" : "");
-    main.onclick = () => toggleDetail(name);
+
+    /* 豆名エリア（タップで詳細展開） */
+    const info = document.createElement("div");
+    info.className = "bean-info";
+    info.onclick = () => toggleDetail(name);
 
     const nameEl = document.createElement("div");
     nameEl.className = "bean-name";
     nameEl.textContent = name;
-    main.appendChild(nameEl);
+    info.appendChild(nameEl);
 
     if (memo) {
       const memoEl = document.createElement("div");
       memoEl.className = "bean-memo-preview";
       memoEl.textContent = memo;
-      main.appendChild(memoEl);
+      info.appendChild(memoEl);
     }
+
+    /* ▷ボタン（編集：入力欄にセット） */
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "toggle-btn";
+    toggleBtn.textContent = "✏️";
+    toggleBtn.onclick = () => loadBean(name);
+
+    main.appendChild(info);
+    main.appendChild(toggleBtn);
 
     /* 詳細行 */
     const detail = document.createElement("div");
     detail.className = "bean-detail" + (openName === name ? " open" : "");
-    detail.dataset.name = name;
 
-    /* ↑ボタン */
     const upBtn = document.createElement("button");
     upBtn.className = "detail-btn";
     upBtn.textContent = "↑";
-    upBtn.disabled = idx === 0 || (idx > 0 && getBeanData(names[idx-1]).hidden && !hidden);
-    upBtn.onclick = (e) => { e.stopPropagation(); moveBean(idx, -1); };
+    upBtn.disabled = idx === 0;
+    upBtn.onclick = () => moveBean(idx, -1);
 
-    /* ↓ボタン */
     const downBtn = document.createElement("button");
     downBtn.className = "detail-btn";
     downBtn.textContent = "↓";
-    downBtn.disabled = idx === names.length - 1 || (hidden && !getBeanData(names[idx+1])?.hidden);
-    downBtn.onclick = (e) => { e.stopPropagation(); moveBean(idx, 1); };
+    downBtn.disabled = idx === names.length - 1;
+    downBtn.onclick = () => moveBean(idx, 1);
 
-    /* 非表示ボタン */
     const hideBtn = document.createElement("button");
     hideBtn.className = "detail-btn hide-btn" + (hidden ? " on" : "");
     hideBtn.textContent = hidden ? "表示" : "非表示";
-    hideBtn.title = hidden ? "表示に戻す" : "非表示";
-    hideBtn.onclick = (e) => { e.stopPropagation(); toggleHidden(name, hidden); };
+    hideBtn.onclick = () => toggleHidden(name, hidden);
 
-    /* 削除ボタン */
     const delBtn = document.createElement("button");
     delBtn.className = "detail-btn delete-btn";
     delBtn.textContent = "削除";
-    delBtn.onclick = (e) => { e.stopPropagation(); deleteBean(name); };
+    delBtn.onclick = () => deleteBean(name);
 
     detail.appendChild(upBtn);
     detail.appendChild(downBtn);
@@ -262,6 +281,13 @@ function renderList() {
     item.appendChild(detail);
     beanList.appendChild(item);
   });
+}
+
+function loadBean(name) {
+  const data = getBeanData(name);
+  beanNameEl.value = name;
+  beanMemoEl.value = data.memo || "";
+  beanNameEl.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function toggleDetail(name) {
@@ -282,9 +308,7 @@ function toggleHidden(name, currentHidden) {
   const data = getBeanData(name);
   data.hidden = !currentHidden;
   localStorage.setItem("master_bean_" + name, JSON.stringify(data));
-
   if (!currentHidden) {
-    // 非表示にする → 最後尾に移動
     const order = getMasterBeans().filter(n => n !== name);
     order.push(name);
     saveOrder(order);
@@ -298,11 +322,11 @@ function saveBean() {
   if (!name) { alert("豆の名前を入力してください"); return; }
 
   const existing = getBeanData(name);
+  const isNew = !localStorage.getItem("master_bean_" + name);
   const data = {
     memo:   beanMemoEl.value.trim(),
     hidden: existing.hidden || false
   };
-  const isNew = !localStorage.getItem("master_bean_" + name);
   localStorage.setItem("master_bean_" + name, JSON.stringify(data));
 
   if (isNew) {
@@ -325,7 +349,7 @@ function deleteBean(name) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("beanName").addEventListener("keydown", (e) => {
+  beanNameEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); e.target.blur(); }
   });
   renderList();
