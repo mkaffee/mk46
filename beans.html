@@ -173,6 +173,7 @@ const beanMemoEl = document.getElementById("beanMemo");
 const beanList   = document.getElementById("beanList");
 
 let openName = null;
+let editingName = null;
 
 function getOrder() {
   const raw = localStorage.getItem("master_order");
@@ -287,6 +288,7 @@ function loadBean(name) {
   const data = getBeanData(name);
   beanNameEl.value = name;
   beanMemoEl.value = data.memo || "";
+  editingName = name;
   beanNameEl.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
@@ -321,18 +323,41 @@ function saveBean() {
   const name = beanNameEl.value.trim();
   if (!name) { alert("豆の名前を入力してください"); return; }
 
-  const existing = getBeanData(name);
-  const isNew = !localStorage.getItem("master_bean_" + name);
   const data = {
     memo:   beanMemoEl.value.trim(),
-    hidden: existing.hidden || false
+    hidden: false
   };
-  localStorage.setItem("master_bean_" + name, JSON.stringify(data));
 
-  if (isNew) {
-    const order = getOrder();
-    order.unshift(name);
+  if (editingName) {
+    // 編集モード：元エントリの位置を維持
+    const order = getMasterBeans();
+    const idx   = order.indexOf(editingName);
+    const oldData = getBeanData(editingName);
+    data.hidden = oldData.hidden || false;
+
+    // 古いエントリ削除
+    localStorage.removeItem("master_bean_" + editingName);
+    // 新名で保存
+    localStorage.setItem("master_bean_" + name, JSON.stringify(data));
+    // 順番を元の位置に差し替え
+    if (idx !== -1) {
+      order.splice(idx, 1, name);
+    } else {
+      order.push(name);
+    }
     saveOrder(order);
+    editingName = null;
+  } else {
+    // 新規モード
+    const existing = getBeanData(name);
+    data.hidden = existing.hidden || false;
+    const isNew = !localStorage.getItem("master_bean_" + name);
+    localStorage.setItem("master_bean_" + name, JSON.stringify(data));
+    if (isNew) {
+      const order = getOrder();
+      order.unshift(name);
+      saveOrder(order);
+    }
   }
 
   beanNameEl.value = "";
@@ -351,6 +376,9 @@ function deleteBean(name) {
 window.addEventListener("DOMContentLoaded", () => {
   beanNameEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); e.target.blur(); }
+  });
+  beanNameEl.addEventListener("input", () => {
+    if (!beanNameEl.value.trim()) editingName = null;
   });
   renderList();
 });
