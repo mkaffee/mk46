@@ -311,10 +311,16 @@ function toggleHidden(name, currentHidden) {
   data.hidden = !currentHidden;
   localStorage.setItem("master_bean_" + name, JSON.stringify(data));
   if (!currentHidden) {
+    // 非表示にする → 最後尾に移動
     const order = getMasterBeans().filter(n => n !== name);
     order.push(name);
     saveOrder(order);
     openName = null;
+  } else {
+    // 表示に戻す → 先頭に移動
+    const order = getMasterBeans().filter(n => n !== name);
+    order.unshift(name);
+    saveOrder(order);
   }
   renderList();
 }
